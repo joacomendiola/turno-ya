@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Médicos — TurnoYa{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h4">Médicos</h2>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Apellido y nombre</th>
+        <th>Matrícula</th>
+        <th>Especialidad</th>
+        <!-- TODO: agregar columna de acciones cuando implementen detalle_medico -->
+      </tr>
+    </thead>
+    <tbody>
+      {% for medico in medicos %}
+      <tr>
+        <td>{{ medico }}</td>
+        <td><code>{{ medico.matricula }}</code></td>
+        <td>{{ medico.especialidad }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3" class="text-center text-muted">No hay médicos cargados.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

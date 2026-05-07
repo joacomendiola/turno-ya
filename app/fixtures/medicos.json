@@ -1,0 +1,22 @@
+[
+  {
+    "model": "app.medico",
+    "pk": 1,
+    "fields": { "nombre": "Ana", "apellido": "García", "matricula": "MP-1001", "especialidad": "Clínica Médica" }
+  },
+  {
+    "model": "app.medico",
+    "pk": 2,
+    "fields": { "nombre": "Carlos", "apellido": "López", "matricula": "MP-1002", "especialidad": "Pediatría" }
+  },
+  {
+    "model": "app.medico",
+    "pk": 3,
+    "fields": { "nombre": "Sofía", "apellido": "Martínez", "matricula": "MP-1003", "especialidad": "Cardiología" }
+  },
+  {
+    "model": "app.medico",
+    "pk": 4,
+    "fields": { "nombre": "Juan", "apellido": "Pérez", "matricula": "MP-1004", "especialidad": "Clínica Médica" }
+  }
+]
