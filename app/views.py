@@ -3,13 +3,26 @@
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Medico, Turno, Paciente
-
+from datetime import date
+from django.db.models import Count
 
 class HomeView(TemplateView):
     """Vista de inicio. Por ahora vacía — completar con estadísticas."""
 
     template_name = "clinica/home.html"
-    context_object_name = "home_data"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            "total_medicos": Medico.objects.count(),
+            "total_pacientes": Paciente.objects.count(),
+            "total_turnos": Turno.objects.count(),
+            "turnos_confirmados": Turno.objects.filter(estado="confirmado").count(),
+            "turnos_cancelados": Turno.objects.filter(estado="cancelado").count(),
+            "prox_turnos": Turno.objects.filter(fecha__gte=date.today()).order_by("fecha", "hora")[:5],
+            "medicos_por_especialidad": Medico.objects.values("especialidad").annotate(count=Count("id")).order_by("-count"),
+        })
+        return context
 
 
 class ListaMedicosView(LoginRequiredMixin, ListView):
