@@ -34,3 +34,15 @@ class CustomLoginView(LoginView):
     def get_success_url(self):
        messages.success(self.request, f"¡Bienvenido/a al sistema, {self.request.user.username}!")
        return reverse_lazy('app:home')
+    
+class CustomLogoutView(LogoutView):
+    next_page = reverse_lazy('app:login')
+
+class RegistroView(CreateView):
+    form_class = UserCreationForm
+    template_name = 'auth/registro.html'
+    success_url = reverse_lazy('app:login')
+
+    def form_valid(self, form):
+        messages.success(self.request, "¡Registro exitoso! Ahora puedes iniciar sesión.")
+        return super().form_valid(form)
