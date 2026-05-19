@@ -1,5 +1,7 @@
 """Vistas iniciales para navegar médicos y pantalla de inicio."""
 
+from pyexpat.errors import messages
+
 from django.views.generic import ListView, TemplateView
 from .models import Medico
 
@@ -24,3 +26,11 @@ class ListaMedicosView(ListView):
 # class NuevoTurnoView(...): ...
 # class CancelarTurnoView(...): ...
 # class ListaPacientesView(...): ...
+
+class CustomLoginView(TemplateView):
+    template_name = 'auth/login.html'
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+       messages.success(self.request, f"¡Bienvenido/a al sistema, {self.request.user.username}!")
+       return reverse_lazy('app:home')
