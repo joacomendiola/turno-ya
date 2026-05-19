@@ -5,6 +5,12 @@ from pyexpat.errors import messages
 from django.views.generic import ListView, TemplateView
 from .models import Medico
 
+from django.contrib.auth.views import LoginView, LogoutView
+from django.views.generic import CreateView
+from django.contrib.auth.forms import UserCreationForm
+from django.urls import reverse_lazy
+from django.contrib import messages
+
 
 class HomeView(TemplateView):
     """Vista de inicio. Por ahora vacía — completar con estadísticas."""
