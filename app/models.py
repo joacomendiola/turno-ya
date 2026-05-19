@@ -90,14 +90,39 @@ class Medico(models.Model):
     # class Paciente(models.Model): ...
     # class Turno(models.Model): ...
 
-    class ObraSocial(models.Model): pass
-    class Medico(models.Model): pass
-    class Paciente(models.Model): pass
-    class Turno(models.Model): pass
-    class Ausencia(models.Model): pass
+class ObraSocial(models.Model): pass
+class Medico(models.Model): pass
+class Paciente(models.Model): pass
+class Turno(models.Model): pass
+class Ausencia(models.Model): pass
 
-    class Especialidad(models.Model):
-        nombre = models.CharField(max_length=100, unique=True)
-        descripcion = models.TextField(blank=True)
-        def __str__(self):
-            return self.nombre
+class Especialidad(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+    descripcion = models.TextField(blank=True)
+    
+    def __str__(self):
+        return self.nombre
+
+    def validate(self):
+        errors = []
+        if not self.nombre or not self.nombre.strip():
+            errors.append("El nombre de la especialidad es obligatorio.")
+            return errors
+        
+        @classmethod
+        def new(cls, **kwargs):
+            especialidad = cls(**kwargs)
+            errors = especialidad.validate()
+            if errors:
+                return None, errors
+            especialidad.save()
+            return especialidad, []
+        
+        def update(self, **kwargs):
+            for field, value in kwargs.items():
+                setattr(self, field, value)
+            errors = self.validate()
+            if errors:
+                return errors
+            self.save()
+            return []
