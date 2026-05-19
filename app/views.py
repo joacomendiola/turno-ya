@@ -27,7 +27,7 @@ class ListaMedicosView(ListView):
 # class CancelarTurnoView(...): ...
 # class ListaPacientesView(...): ...
 
-class CustomLoginView(TemplateView):
+class CustomLoginView(LoginView):
     template_name = 'auth/login.html'
     redirect_authenticated_user = True
 
