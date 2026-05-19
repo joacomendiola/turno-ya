@@ -85,21 +85,6 @@ class Medico(models.Model):
         self.save()
         return []
 
-    # TODO: Agregar los siguientes modelos:
-    # class Especialidad(models.Model): ...  ← extraer especialidad a FK
-    # class Paciente(models.Model): ...
-    # class Turno(models.Model): ...
-
-class ObraSocial(models.Model): pass
-class Paciente(models.Model): pass
-class Turno(models.Model): pass
-class Ausencia(models.Model): pass
-
-
-
-
-
-
 class EspecialidadManager(models.Manager):
     def con_medicos_activos(self):
         return self.annotate(num_medicos=models.Count("medico")).filter(num_medicos__gt=0)
@@ -136,3 +121,14 @@ class Especialidad(models.Model):
             return errors
         self.save()
         return []
+
+# ==========================================
+# Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
+# ==========================================
+class ObraSocial(models.Model): pass
+class Paciente(models.Model): pass
+class Turno(models.Model): pass
+class Ausencia(models.Model): pass
+
+# class Especialidad(models.Model): ...  ← extraer especialidad a FK
+    
