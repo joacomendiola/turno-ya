@@ -89,3 +89,9 @@ class Medico(models.Model):
     # class Especialidad(models.Model): ...  ← extraer especialidad a FK
     # class Paciente(models.Model): ...
     # class Turno(models.Model): ...
+
+    class ObraSocial(models.Model): pass
+    class Medico(models.Model): pass
+    class Paciente(models.Model): pass
+    class Turno(models.Model): pass
+    class Ausencia(models.Model): pass
