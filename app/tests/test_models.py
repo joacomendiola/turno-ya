@@ -2,6 +2,8 @@
 
 from django.test import TestCase
 from app.models import Medico
+from app.models import Especialidad
+from django.urls import reverse
 
 
 class MedicoModelTest(TestCase):
@@ -71,4 +73,43 @@ class MedicoModelTest(TestCase):
         self.medico.refresh_from_db()
         self.assertEqual(self.medico.nombre, "Laura")  # sin cambios
 
-    # TODO: agregar tests para Paciente y Turno cuando los implementen
+
+
+class EspecialidadModelTest(TestCase):
+
+    def test_new_crea_especialidad_con_datos_validos(self):
+        """Verifica que se pueda crear una especialidad con datos correctos."""
+        especialidad, errors = Especialidad.new(nombre="Pediatría", descripcion="Cuidado infantil")
+        self.assertIsNotNone(especialidad)
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(especialidad.nombre, "Pediatría")
+    
+    def test_validate_nombre_vacio_retorna_error(self):
+        """Edge case: El método validate debe rechazar nombres vacíos o con puros espacios."""
+        especialidad, errors = Especialidad.new(nombre="   ")
+        self.assertIsNone(especialidad)
+        self.assertIn("El nombre de la especialidad es obligatorio.", errors)
+
+    def test_update_modifica_datos_correctamente(self):
+        """Verifica que el método update guarde los cambios si pasa la validación."""
+        especialidad, _ = Especialidad.new(nombre="Traumatología")
+        errors = especialidad.update(descripcion="Especialistas en huesos")
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(especialidad.descripcion, "Especialistas en huesos")
+
+class AuthViewCBVTest(TestCase):
+    """Pruebas para la vista de autenticación basada en clases."""
+
+    def test_pantalla_login_carga_correctamente(self):
+        """Verifica que la página de login se muestre sin errores."""
+        response = self.client.get(reverse('app:login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'auth/login.html')
+    
+    def test_pantalla_login_con_datos_validos_redirige(self):
+        response = self.client.get(reverse('app:registro'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'auth/registro.html')
+
+
+# TODO: agregar tests para Paciente y Turno cuando los implementen

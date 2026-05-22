@@ -8,6 +8,9 @@ app_name = "app"
 urlpatterns = [
     path("", views.HomeView.as_view(), name="home"),
     path("medicos/", views.ListaMedicosView.as_view(), name="lista_medicos"),
+    path("login/", views.CustomLoginView.as_view(), name="login"),
+    path("logout/", views.CustomLogoutView.as_view(), name="logout"),
+    path("registro/", views.RegistroView.as_view(), name="registro"),
     # TODO:
     # path("medicos/<int:pk>/", views.DetalleMedicoView.as_view(), name="detalle_medico"),
     # path("turnos/", views.ListaTurnosView.as_view(), name="lista_turnos"),
