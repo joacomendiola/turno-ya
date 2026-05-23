@@ -12,6 +12,7 @@ from django.views.generic import CreateView
 from django.contrib.auth.forms import UserCreationForm
 from django.urls import reverse_lazy
 from django.contrib import messages
+from .forms import TurnoForm
 
 
 class HomeView(TemplateView):
@@ -56,7 +57,14 @@ class ListaTurnosView(LoginRequiredMixin, ListView):
 class NuevoTurnoView(LoginRequiredMixin, CreateView):
     """Permite crear un nuevo turno para un médico."""
 
+    model = Turno
+    form_class = TurnoForm
     template_name = "clinica/nuevo_turno.html"
+    success_url = reverse_lazy("app:lista_turnos")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Turno creado correctamente.")
+        return super().form_valid(form)
 
 class CancelarTurnoView(LoginRequiredMixin, DeleteView):
     """Permite cancelar un turno existente."""
@@ -69,15 +77,6 @@ class ListaPacientesView(LoginRequiredMixin, ListView):
     template_name = "clinica/lista_pacientes.html"
     model = Paciente
     context_object_name = "pacientes"
-
-
-
-# TODO: implementar las siguientes vistas:
-# class DetalleMedicoView(...): ...
-# class ListaTurnosView(...): ...
-# class NuevoTurnoView(...): ...
-# class CancelarTurnoView(...): ...
-# class ListaPacientesView(...): ...
 
 class CustomLoginView(LoginView):
     template_name = 'auth/login.html'
