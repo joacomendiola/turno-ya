@@ -28,16 +28,16 @@ class MedicoAdmin(admin.ModelAdmin):
 
 class TurnoInline(admin.TabularInline):
     model = Turno
-    fields = ("fecha", "hora", "medico", "estado")  # ajustar según campos reales
+    fields = ("fecha", "hora", "medico", "estado")  # TODO: ajustar según campos reales al implementar turno
     readonly_fields = ()
     extra = 0
     show_change_link = True
 
 @admin.register(Paciente)
 class PacienteAdmin(admin.ModelAdmin):
-    list_display = ("apellido", "nombre", "documento")  # ajustar según campos de Paciente
+    list_display = ("apellido", "nombre", "documento")  # TODO: ajustar según campos de Paciente
     search_fields = ("apellido", "nombre", "documento", "email")
-    list_filter = ("obra_social",)  # ajustar si aplica
+    list_filter = ("obra_social",)  # TODO: ajustar si aplica
     inlines = (TurnoInline,)
     list_per_page = 25
 
