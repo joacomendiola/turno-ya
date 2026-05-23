@@ -15,7 +15,7 @@ from django.contrib import messages
 
 
 class HomeView(TemplateView):
-    """Vista de inicio. Por ahora vacía — completar con estadísticas."""
+    """Vista de inicio. Muestra estadísticas generales y próximos turnos."""
 
     template_name = "clinica/home.html"
 

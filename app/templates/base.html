@@ -15,17 +15,15 @@
       </button>
       <div class="collapse navbar-collapse" id="navMenu">
         <ul class="navbar-nav ms-auto">
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'app:lista_medicos' %}">Médicos</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'app:lista_turnos' %}">Turnos</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'app:lista_pacientes' %}">Pacientes</a>
-          </li>
-          
-          <!-- TODO: agregar links a turnos y pacientes -->
+          {% if user.is_authenticated %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'app:lista_medicos' %}">Médicos</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'app:lista_turnos' %}">Turnos</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'app:lista_pacientes' %}">Pacientes</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'app:logout' %}">Cerrar sesión</a></li>
+          {% else %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'app:login' %}">Iniciar sesión</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'app:registro' %}">Registrarse</a></li>
+          {% endif %}
         </ul>
       </div>
     </div>

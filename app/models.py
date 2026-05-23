@@ -122,12 +122,6 @@ class Especialidad(models.Model):
         self.save()
         return []
 
-# ==========================================
-# Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
-# ==========================================
-class ObraSocial(models.Model): pass
-class Paciente(models.Model): pass
-class Turno(models.Model): pass
 
 class Ausencia(models.Model):
 
@@ -213,3 +207,9 @@ class Ausencia(models.Model):
         self.fecha_fin = fecha_fin
         self.save()
         return []
+# ==========================================
+# Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
+# ==========================================
+class ObraSocial(models.Model): pass
+class Paciente(models.Model): pass
+class Turno(models.Model): pass
