@@ -6,7 +6,7 @@ class TurnoForm(forms.ModelForm):
     class Meta:
         model = Turno
         # IMPORTANTE: Ajustar los campos según el modelo real de Turno
-        fields = ("medico", "paciente", "fecha", "hora", "estado")
+        fields = ("fecha",)
 
     def clean_fecha(self):
         fecha = self.cleaned_data.get("fecha")

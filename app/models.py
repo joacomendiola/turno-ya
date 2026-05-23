@@ -127,10 +127,10 @@ class Ausencia(models.Model):
 
     """Representa una ausencia o licencia de un médico."""
 
-    medico = models.ForeignKey(Medico, on_delete=models.CASCADE)
-    motivo = models.CharField(max_length=200)
-    fecha_inicio = models.DateField()
-    fecha_fin = models.DateField()
+    medico = models.ForeignKey(Medico, on_delete=models.CASCADE, null=True, blank=True)
+    motivo = models.CharField(max_length=200, null=True, blank=True)                        #Agrego nulos para poder hacer la migración sin problemas
+    fecha_inicio = models.DateField(default=date.today)
+    fecha_fin = models.DateField(default=date.today)
     
     class Meta:
         ordering = ["-fecha_inicio"]
@@ -217,5 +217,16 @@ class Ausencia(models.Model):
 # Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
 # ==========================================
 class ObraSocial(models.Model): pass
-class Paciente(models.Model): pass
-class Turno(models.Model): pass
+
+class Paciente(models.Model):
+    nombre = models.CharField(max_length=100, blank=True)
+    def __str__(self):
+        return self.nombre or "Paciente sin nombre"
+ # TODO: agrego campo mínimo para utilizar el admin, ajustar según modelo real
+
+class Turno(models.Model):
+    fecha = models.DateField(null=True, blank=True)
+    def __str__(self):
+        return str(self.fecha) if self.fecha else "Turno sin fecha"
+
+ # TODO: agrego campo mínimo para utilizar el formulario de turno, ajustar según modelo real

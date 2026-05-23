@@ -1,7 +1,7 @@
 """Configuración básica del admin para los modelos de la app."""
 
 from django.contrib import admin
-from .models import Medico, Especialidad, Turno, Paciente
+from .models import Medico, Especialidad, Paciente, Turno
 
 @admin.register(Especialidad)
 class EspecialidadAdmin(admin.ModelAdmin):
@@ -26,25 +26,31 @@ class MedicoAdmin(admin.ModelAdmin):
     # Permite buscar médicos por sus datos clave o matrícula
     search_fields = ("apellido", "nombre", "matricula")
 
-class TurnoInline(admin.TabularInline):
-    model = Turno
-    fields = ("fecha", "hora", "medico", "estado")  # TODO: ajustar según campos reales al implementar turno
-    readonly_fields = ()
-    extra = 0
-    show_change_link = True
-
 @admin.register(Paciente)
 class PacienteAdmin(admin.ModelAdmin):
-    list_display = ("apellido", "nombre", "documento")  # TODO: ajustar según campos de Paciente
-    search_fields = ("apellido", "nombre", "documento", "email")
-    list_filter = ("obra_social",)  # TODO: ajustar si aplica
-    inlines = (TurnoInline,)
+    """Configuración del panel de administración para Pacientes."""
+    
+    # Columnas que se muestran en el listado principal
+    list_display = ("nombre",)
+    
+    # Buscador interactivo por texto
+    search_fields = ("nombre",)
+    
+    # Número de elementos por página
     list_per_page = 25
 
 @admin.register(Turno)
 class TurnoAdmin(admin.ModelAdmin):
-    list_display = ("fecha", "hora", "medico", "paciente", "estado")
-    list_filter = ("estado", "medico", "fecha")
-    search_fields = ("paciente__apellido", "paciente__nombre", "medico__apellido", "medico__nombre")
+    """Configuración del panel de administración para Turnos."""
+    
+    # Columnas que se muestran en el listado principal
+    list_display = ("fecha",)
+    
+    # Filtro lateral para segmentar rápidamente
+    list_filter = ("fecha",)
+    
+    # Hierarquía de fechas
     date_hierarchy = "fecha"
+    
+    # Número de elementos por página
     list_per_page = 50
