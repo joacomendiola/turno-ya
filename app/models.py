@@ -1,12 +1,13 @@
 """Modelos de dominio de TurnoYa."""
 
 from __future__ import annotations
+from xml.parsers.expat import errors
 from django.db import models
 
 
 class Medico(models.Model):
     """Representa a un profesional médico disponible para turnos."""
-
+    related_name = "medico"
     nombre = models.CharField(max_length=100)
     apellido = models.CharField(max_length=100)
     matricula = models.CharField(max_length=20, unique=True)
@@ -125,7 +126,18 @@ class Especialidad(models.Model):
 # ==========================================
 # Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
 # ==========================================
-class ObraSocial(models.Model): pass
+class ObraSocial(models.Model): 
+    name=models.CharField(max_length=100, unique=True, default="Nombre default")
+    sitioWeb=models.URLField(blank=True)
+    requiereToken=models.BooleanField(default=False)
+    medicos_disponibles=models.ManyToManyField(Medico, blank=False) 
+
+
+    
+
+# ==========================================
+# Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
+# ==========================================
 class Paciente(models.Model): pass
 class Turno(models.Model): pass
 class Ausencia(models.Model): pass
