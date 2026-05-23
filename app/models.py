@@ -128,7 +128,22 @@ class Especialidad(models.Model):
 class ObraSocial(models.Model): pass
 class Paciente(models.Model): pass
 class Turno(models.Model): pass
-class Ausencia(models.Model): pass
+
+class Ausencia(models.Model):
+
+    """Representa una ausencia o licencia de un médico."""
+
+    medico = models.ForeignKey(Medico, on_delete=models.CASCADE)
+    motivo = models.CharField(max_length=200)
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField()
+    
+    class Meta:
+        ordering = ["-fecha_inicio"]
+    
+    def __str__(self):
+        return f"Ausencia {self.medico.apellido} ({self.fecha_inicio} - {self.fecha_fin})"
+    pass
 
 # class Especialidad(models.Model): ...  ← extraer especialidad a FK
     
