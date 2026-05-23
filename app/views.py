@@ -1,10 +1,18 @@
 """Vistas iniciales para navegar médicos y pantalla de inicio."""
 
+from pyexpat.errors import messages
+
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Medico, Turno, Paciente
 from datetime import date
 from django.db.models import Count
+from django.contrib.auth.views import LoginView, LogoutView
+from django.views.generic import CreateView
+from django.contrib.auth.forms import UserCreationForm
+from django.urls import reverse_lazy
+from django.contrib import messages
+
 
 class HomeView(TemplateView):
     """Vista de inicio. Por ahora vacía — completar con estadísticas."""
@@ -70,3 +78,23 @@ class ListaPacientesView(LoginRequiredMixin, ListView):
 # class NuevoTurnoView(...): ...
 # class CancelarTurnoView(...): ...
 # class ListaPacientesView(...): ...
+
+class CustomLoginView(LoginView):
+    template_name = 'auth/login.html'
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+       messages.success(self.request, f"¡Bienvenido/a al sistema, {self.request.user.username}!")
+       return reverse_lazy('app:home')
+    
+class CustomLogoutView(LogoutView):
+    next_page = reverse_lazy('app:login')
+
+class RegistroView(CreateView):
+    form_class = UserCreationForm
+    template_name = 'auth/registro.html'
+    success_url = reverse_lazy('app:login')
+
+    def form_valid(self, form):
+        messages.success(self.request, "¡Registro exitoso! Ahora puedes iniciar sesión.")
+        return super().form_valid(form)
