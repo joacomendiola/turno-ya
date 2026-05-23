@@ -2,89 +2,10 @@
 
 from __future__ import annotations
 from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
 
-
-class Medico(models.Model):
-    """Representa a un profesional médico disponible para turnos."""
-
-    nombre = models.CharField(max_length=100)
-    apellido = models.CharField(max_length=100)
-    matricula = models.CharField(max_length=20, unique=True)
-    especialidad = models.CharField(max_length=100)
-
-    class Meta:
-        ordering = ["apellido", "nombre"]
-
-    def __str__(self):
-        """Retorna una etiqueta legible para listados y admin."""
-        return f"Dr/a. {self.apellido}, {self.nombre}"
-
-    def nombre_completo(self):
-        """Retorna nombre y apellido concatenados."""
-        return f"{self.nombre} {self.apellido}"
-
-    def cantidad_turnos(self):
-        """Retorna la cantidad total de turnos asociados a este médico."""
-        if not hasattr(self, "turno_set"):
-            return 0
-        return self.turno_set.count()
-
-    @classmethod
-    def validate(cls, nombre, apellido, matricula, especialidad):
-        """
-        Valida los datos del médico. Retorna una lista de errores.
-        Si la lista está vacía, los datos son válidos.
-        """
-        errors = []
-
-        if not nombre or not nombre.strip():
-            errors.append("El nombre es obligatorio.")
-
-        if not apellido or not apellido.strip():
-            errors.append("El apellido es obligatorio.")
-
-        if not matricula or not matricula.strip():
-            errors.append("La matrícula es obligatoria.")
-
-        if not especialidad or not especialidad.strip():
-            errors.append("La especialidad es obligatoria.")
-
-        return errors
-
-    @classmethod
-    def new(cls, nombre, apellido, matricula, especialidad):
-        """
-        Crea y persiste un nuevo médico si los datos son válidos.
-        Retorna (instancia, errors). Si hay errores, instancia es None.
-        """
-        errors = cls.validate(nombre, apellido, matricula, especialidad)
-        if errors:
-            return None, errors
-
-        medico = cls.objects.create(
-            nombre=nombre.strip(),
-            apellido=apellido.strip(),
-            matricula=matricula.strip(),
-            especialidad=especialidad.strip(),
-        )
-        return medico, []
-
-    def update(self, nombre, apellido, matricula, especialidad):
-        """
-        Actualiza los datos del médico si los datos son válidos.
-        Retorna una lista de errores. Si está vacía, la actualización fue exitosa.
-        """
-        errors = self.__class__.validate(nombre, apellido, matricula, especialidad)
-        if errors:
-            return errors
-
-        self.nombre = nombre.strip()
-        self.apellido = apellido.strip()
-        self.matricula = matricula.strip()
-        self.especialidad = especialidad.strip()
-        self.save()
-        return []
-
+# 1. Especialidad primero, porque Medico depende de ella
 class EspecialidadManager(models.Manager):
     def con_medicos_activos(self):
         return self.annotate(num_medicos=models.Count("medico")).filter(num_medicos__gt=0)
@@ -102,7 +23,7 @@ class Especialidad(models.Model):
         errors = []
         if not self.nombre or not self.nombre.strip():
             errors.append("El nombre de la especialidad es obligatorio.")
-            return errors
+        return errors
         
     @classmethod
     def new(cls, **kwargs):
@@ -122,13 +43,65 @@ class Especialidad(models.Model):
         self.save()
         return []
 
-# ==========================================
-# Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
-# ==========================================
-class ObraSocial(models.Model): pass
-class Paciente(models.Model): pass
-class Turno(models.Model): pass
-class Ausencia(models.Model): pass
+# 2. Medico usa Especialidad
+class Medico(models.Model):
+    nombre = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100)
+    matricula = models.CharField(max_length=20, unique=True)
+    especialidad = models.ForeignKey(Especialidad, on_delete=models.PROTECT)
 
-# class Especialidad(models.Model): ...  ← extraer especialidad a FK
+    class Meta:
+        ordering = ["apellido", "nombre"]
+
+    def __str__(self):
+        return f"Dr/a. {self.apellido}, {self.nombre}"
+
+    # ... [mantener aquí tus métodos validate, new, update de Medico] ...
+
+# 3. Paciente y Turno al final
+class Paciente(models.Model):
+    nombre = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100)
+    dni = models.CharField(max_length=20, unique=True)
+    email = models.EmailField(unique=True)
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.apellido}, {self.nombre} (DNI: {self.dni})"
+
+    @classmethod
+    def validate(cls, nombre, apellido, dni, email):
+        errors = []
+        if not dni or not dni.strip():
+            errors.append("El DNI es obligatorio.")
+        return errors
+
+    @classmethod
+    def new(cls, nombre, apellido, dni, email, usuario):
+        errors = cls.validate(nombre, apellido, dni, email)
+        if errors:
+            return None, errors
+        paciente = cls.objects.create(nombre=nombre, apellido=apellido, dni=dni, email=email, usuario=usuario)
+        return paciente, []
+
+class Turno(models.Model):
+    ESTADOS = [('pendiente', 'Pendiente'), ('confirmado', 'Confirmado'), ('cancelado', 'Cancelado')]
     
+    medico = models.ForeignKey(Medico, on_delete=models.CASCADE)
+    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE)
+    fecha_hora = models.DateTimeField(default=timezone.now)
+    motivo = models.TextField()
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return f"Turno {self.id} - {self.paciente}"
+
+class Ausencia(models.Model):
+    # Definir campos pendientes aquí
+    pass
+
+class ObraSocial(models.Model):
+    # Definir campos pendientes aquí
+    pass
