@@ -4,6 +4,8 @@ from django.test import TestCase
 from app.models import Medico
 from app.models import Especialidad
 from django.urls import reverse
+from datetime import date
+from app.models import Ausencia
 
 
 class MedicoModelTest(TestCase):
@@ -112,4 +114,41 @@ class AuthViewCBVTest(TestCase):
         self.assertTemplateUsed(response, 'auth/registro.html')
 
 
+
+class AusenciaModelTest(TestCase):
+    def setUp(self):
+        self.medico = Medico.objects.create(
+            nombre="Laura",
+            apellido="Romero",
+            matricula="MP-9999",
+            especialidad="Pediatría",
+        )
+
+    def test_validate_ausencia_solapada_retorna_error(self):
+        primera, errors_primera = Ausencia.new(
+            medico=self.medico,
+            motivo="Licencia médica",
+            fecha_inicio=date(2026, 5, 1),
+            fecha_fin=date(2026, 5, 10),
+        )
+        self.assertEqual(errors_primera, [])
+        self.assertIsNotNone(primera)
+
+        _, errors_segunda = Ausencia.new(
+            medico=self.medico,
+            motivo="Vacaciones",
+            fecha_inicio=date(2026, 5, 5),
+            fecha_fin=date(2026, 5, 12),
+        )
+        self.assertIn("Ya existe una ausencia del médico en ese rango de fechas.", errors_segunda)
+
+    def test_validate_fecha_inicio_posterior_a_fin_retorna_error(self):
+        _, errors = Ausencia.new(
+            medico=self.medico,
+            motivo="Licencia",
+            fecha_inicio=date(2026, 5, 20),
+            fecha_fin=date(2026, 5, 10),
+        )
+        self.assertIn("La fecha de inicio no puede ser posterior a la fecha de fin.", errors)
+        
 # TODO: agregar tests para Paciente y Turno cuando los implementen

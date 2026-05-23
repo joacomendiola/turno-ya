@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from django.db import models
-
+from datetime import date
 
 class Medico(models.Model):
     """Representa a un profesional médico disponible para turnos."""
@@ -157,6 +157,12 @@ class Ausencia(models.Model):
 
         if fecha_inicio and fecha_fin and fecha_inicio > fecha_fin:
             errors.append("La fecha de inicio no puede ser posterior a la fecha de fin.")
+
+        if fecha_inicio and fecha_inicio < date.today():
+            errors.append("La fecha de inicio no puede ser anterior a hoy.")
+
+        if fecha_fin and fecha_fin < date.today():
+            errors.append("La fecha de fin no puede ser anterior a hoy.")
 
         # Validar solapamiento
         if medico and fecha_inicio and fecha_fin:
