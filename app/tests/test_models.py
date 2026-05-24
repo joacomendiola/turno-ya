@@ -3,6 +3,7 @@
 from django.test import TestCase
 from app.models import Especialidad, Medico,ObraSocial
 from django.urls import reverse
+from django.db import IntegrityError
 
 
 class MedicoModelTest(TestCase):
@@ -112,6 +113,7 @@ class AuthViewCBVTest(TestCase):
 
 
 # TODO: agregar tests para Paciente y Turno cuando los implementen
+#///////////////////////////////////////////
 #TESTS PARA OBRA SOCIAL
 
 class ObraSocialModelTest(TestCase):
@@ -182,3 +184,31 @@ class ObraSocialModelTest(TestCase):
         self.assertEqual(len(errors), 0)
         self.assertEqual(obra_social.name, "Sancor Salud Modificado")
         self.assertTrue(obra_social.requiereToken)
+
+class ObraSocialSeparatedConstraintsTest(TestCase):
+
+    def setUp(self):
+        # Creamos el médico requerido para cumplir la relación ManyToMany obligatoria
+        self.medico = Medico.objects.create(
+            nombre="Luis", apellido="Sosa", matricula="M-4432", especialidad="Pediatría"
+        )
+
+    def test_evita_nombres_duplicados(self):
+        # Verifica que la base de datos rechace dos obras sociales con el mismo nombre
+        obra1 = ObraSocial.objects.create(name="OSDE", sitioWeb="https://osde.com.ar")
+        obra1.medicos_disponibles.set([self.medico])
+
+        # Intentamos crear otra con distinto sitio web pero mismo nombre; debe fallar
+        with self.assertRaises(IntegrityError):
+            obra2 = ObraSocial.objects.create(name="OSDE", sitioWeb="https://otraosde.com.ar")
+            obra2.medicos_disponibles.set([self.medico])
+
+    def test_evita_sitios_web_duplicados(self):
+        # Verifica que la base de datos rechace dos obras sociales con el mismo sitio web
+        obra1 = ObraSocial.objects.create(name="OSDE", sitioWeb="https://osde.com.ar")
+        obra1.medicos_disponibles.set([self.medico])
+
+        # Intentamos crear otra con distinto nombre pero mismo sitio web; debe fallar
+        with self.assertRaises(IntegrityError):
+            obra2 = ObraSocial.objects.create(name="PAMI", sitioWeb="https://osde.com.ar")
+            obra2.medicos_disponibles.set([self.medico])

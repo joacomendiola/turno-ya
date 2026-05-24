@@ -133,8 +133,23 @@ class ObraSocial(models.Model):
     requiereToken=models.BooleanField(default=False)
     medicos_disponibles=models.ManyToManyField(Medico, blank=False) 
 
+    class Meta:
+        verbose_name_plural = "Obras Sociales"
+        # Declaramos dos restricciones completamente independientes
+        constraints = [
+        
+            models.UniqueConstraint(
+                fields=['name'], 
+                name='error_base_datos_obra_social_nombre_ya_existe'
+            ),
+            models.UniqueConstraint(
+                fields=['sitioWeb'], 
+                name='error_base_datos_obra_social_sitio_web_duplicado'
+            )
+        ]
+
     def __str__(self):
-            return self.name
+            return f"Obra social: {self.name}"
     
     @classmethod
     def validate(cls, name, sitioWeb, requiereToken, medicos_disponibles):
