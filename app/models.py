@@ -161,23 +161,21 @@ class ObraSocial(models.Model):
             name=name.strip(),
             sitioWeb=sitioWeb.strip(),
             requiereToken=requiereToken,
-            medicos_disponibles=medicos_disponibles
         )
         obra_social.medicos_disponibles.set(medicos_disponibles)
         return obra_social, errors
 
-    @classmethod
-    def update(cls, name: str, sitioWeb: str, requiereToken: False, medicos_disponibles: list[Medico]):
-        errors = cls.validate(name, sitioWeb, requiereToken, medicos_disponibles)
+    
+    def update(self, name: str, sitioWeb: str, requiereToken: False, medicos_disponibles: list[Medico]):
+        errors = self.__class__.validate(name, sitioWeb, requiereToken, medicos_disponibles)
         if errors:
             return errors
 
-        obra_social = cls.objects.get(name=name.strip())
-        obra_social.name = name.strip()
-        obra_social.sitioWeb = sitioWeb.strip()
-        obra_social.requiereToken = requiereToken
-        obra_social.medicos_disponibles.set(medicos_disponibles)
-        obra_social.save()
+        self.name = name.strip()
+        self.sitioWeb = sitioWeb.strip()
+        self.requiereToken = requiereToken
+        self.medicos_disponibles.set(medicos_disponibles)
+        self.save()
         return errors
     
 # ==========================================

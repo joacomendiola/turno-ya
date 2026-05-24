@@ -1,8 +1,7 @@
 """Pruebas unitarias del modelo Medico."""
 
 from django.test import TestCase
-from app.models import Medico
-from app.models import Especialidad
+from app.models import Especialidad, Medico,ObraSocial
 from django.urls import reverse
 
 
@@ -113,3 +112,73 @@ class AuthViewCBVTest(TestCase):
 
 
 # TODO: agregar tests para Paciente y Turno cuando los implementen
+#TESTS PARA OBRA SOCIAL
+
+class ObraSocialModelTest(TestCase):
+
+    def setUp(self):
+        # Configura un médico de prueba en la base de datos antes de ejecutar cada test.
+        self.medico_referencia = Medico.objects.create(
+            nombre="Carlos",
+            apellido="Gómez",
+            matricula="M-5543",
+            especialidad="Cardiología"
+        )
+        self.lista_medicos_valida = [self.medico_referencia]
+
+    def test_new_crea_obra_social_con_datos_validos(self):
+        # Verifica la creación exitosa de una obra social con datos y relaciones correctas.
+        obra_social, errors = ObraSocial.new(
+            name="OSDE",
+            sitioWeb="https://osde.com.ar",
+            requiereToken=True,
+            medicos_disponibles=self.lista_medicos_valida
+        )
+        
+        self.assertIsNotNone(obra_social)
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(obra_social.name, "OSDE")
+        self.assertEqual(obra_social.medicos_disponibles.count(), 1)
+
+    def test_validate_detecta_nombre_vacio(self):
+        # Comprueba que el método validate rechace nombres que contengan solo espacios.
+        errors = ObraSocial.validate(
+            name="   ",
+            sitioWeb="https://test.com",
+            requiereToken=False,
+            medicos_disponibles=self.lista_medicos_valida
+        )
+        
+        self.assertIn("El nombre de la obra social es obligatorio.", errors)
+
+    def test_validate_detecta_tipos_invalidos(self):
+        # Valida que se capturen errores si los tipos de datos no coinciden con lo esperado.
+        errors = ObraSocial.validate(
+            name="PAMI",
+            sitioWeb="https://pami.org",
+            requiereToken="Texto Inválido",
+            medicos_disponibles="No Soy Una Lista"
+        )
+        
+        self.assertIn("El campo 'requiereToken' debe ser un valor verdadero o falso.", errors)
+        self.assertIn("El campo 'medicos_disponibles' debe ser una lista de médicos.", errors)
+
+    def test_update_modifica_datos_existentes(self):
+        # Verifica que el método update reescriba los datos y guarde los cambios en la BD.
+        obra_social, _ = ObraSocial.new(
+            name="Sancor Salud",
+            sitioWeb="https://sancor.com",
+            requiereToken=False,
+            medicos_disponibles=self.lista_medicos_valida
+        )
+        
+        errors = obra_social.update(
+            name="Sancor Salud Modificado",
+            sitioWeb="https://sancormodificado.com",
+            requiereToken=True,
+            medicos_disponibles=self.lista_medicos_valida
+        )
+        
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(obra_social.name, "Sancor Salud Modificado")
+        self.assertTrue(obra_social.requiereToken)
