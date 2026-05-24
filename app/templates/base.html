@@ -18,7 +18,25 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'app:lista_medicos' %}">Médicos</a>
           </li>
-          <!-- TODO: agregar links a turnos y pacientes -->
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'app:lista_pacientes' %}">Pacientes</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'app:nuevo_turno' %}">Solicitar Turno</a>
+          </li>
+          
+          {% if user.is_authenticated %}
+            <li class="nav-item">
+              <a class="nav-link text-warning" href="{% url 'app:logout' %}">Salir</a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'app:registro_paciente' %}">Registro</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'app:login' %}">Ingresar</a>
+            </li>
+          {% endif %}
         </ul>
       </div>
     </div>

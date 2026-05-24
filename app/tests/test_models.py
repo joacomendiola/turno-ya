@@ -10,11 +10,15 @@ class MedicoModelTest(TestCase):
     """Verifica comportamiento básico y validaciones del modelo."""
 
     def setUp(self):
+        # Para crear un médico, necesitamos una especialidad válida
+        especialidad_obj = Especialidad.objects.create(nombre="Pediatría")
+        
+        #Médico de prueba para usar en los tests
         self.medico = Medico.objects.create(
             nombre="Laura",
             apellido="Romero",
             matricula="MP-9999",
-            especialidad="Pediatría",
+            especialidad=especialidad_obj, # Django pide objeto, no string
         )
 
     # --- __str__ y métodos simples ---
@@ -111,5 +115,27 @@ class AuthViewCBVTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'auth/registro.html')
 
+    # --- Nuevos testsn(Paciente y Turno) ---
 
-# TODO: agregar tests para Paciente y Turno cuando los implementen
+class PacienteModelTest(TestCase):
+    def test_creacion_paciente_valido(self):
+        from django.contrib.auth.models import User
+        user = User.objects.create_user(username="testuser")
+        paciente, errors = Paciente.new("Juan", "Pérez", "12345678", "juan@gmail.com", user)
+        self.assertEqual(errors, [])
+        self.assertIsNotNone(paciente)
+
+class TurnoModelTest(TestCase):
+    def setUp(self):
+        self.especialidad = Especialidad.objects.create(nombre="General")
+        self.medico = Medico.objects.create(nombre="Dr", apellido="House", matricula="1", especialidad=self.especialidad)
+        from django.contrib.auth.models import User
+        self.user = User.objects.create_user(username="paciente1")
+        self.paciente = Paciente.objects.create(nombre="P", apellido="P", dni="123", email="p@p.com", usuario=self.user)
+
+    def test_creacion_turno_valido(self):
+        from django.utils import timezone
+        turno, errors = Turno.new(self.medico, self.paciente, timezone.now(), "Dolor")
+        self.assertEqual(errors, [])
+        self.assertEqual(turno.estado, 'pendiente')
+

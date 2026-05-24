@@ -11,6 +11,9 @@ urlpatterns = [
     path("login/", views.CustomLoginView.as_view(), name="login"),
     path("logout/", views.CustomLogoutView.as_view(), name="logout"),
     path("registro/", views.RegistroView.as_view(), name="registro"),
+    path('pacientes/registro/', views.RegistroPacienteView.as_view(), name='registro_paciente'),
+    path('pacientes/', views.ListaPacientesView.as_view(), name='lista_pacientes'),
+    path('turnos/nuevo/', views.NuevoTurnoView.as_view(), name='nuevo_turno'),
     # TODO:
     # path("medicos/<int:pk>/", views.DetalleMedicoView.as_view(), name="detalle_medico"),
     # path("turnos/", views.ListaTurnosView.as_view(), name="lista_turnos"),

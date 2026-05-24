@@ -85,23 +85,95 @@ class Paciente(models.Model):
         paciente = cls.objects.create(nombre=nombre, apellido=apellido, dni=dni, email=email, usuario=usuario)
         return paciente, []
 
+from django.db import models
+from django.utils import timezone
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+
+# ... Asegúrate de tener importados tus modelos Medico, Paciente, etc. ...
+
 class Turno(models.Model):
     ESTADOS = [('pendiente', 'Pendiente'), ('confirmado', 'Confirmado'), ('cancelado', 'Cancelado')]
     
-    medico = models.ForeignKey(Medico, on_delete=models.CASCADE)
-    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE)
+    medico = models.ForeignKey('Medico', on_delete=models.CASCADE)
+    paciente = models.ForeignKey('Paciente', on_delete=models.CASCADE)
     fecha_hora = models.DateTimeField(default=timezone.now)
     motivo = models.TextField()
     estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
     creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
+    class Meta:
+        unique_together = ('medico', 'fecha_hora')
+
     def __str__(self):
         return f"Turno {self.id} - {self.paciente}"
 
+    def clean(self):
+        # Esta validación conecta tu lógica de clase con el formulario del admin
+        errors = Turno.validate(self.medico, self.fecha_hora, self.pk)
+        if errors:
+            raise ValidationError({'fecha_hora': errors})
+
+    @classmethod
+    def validate(cls, medico, fecha_hora, exclude_id=None):
+        errors = []
+        if fecha_hora < timezone.now():
+            errors.append("La fecha del turno no puede ser en el pasado.")
+        
+        query = cls.objects.filter(medico=medico, fecha_hora=fecha_hora).exclude(estado='cancelado')
+        if exclude_id:
+            query = query.exclude(pk=exclude_id)
+            
+        if query.exists():
+            errors.append("El médico ya tiene un turno asignado en ese horario.")
+            
+        return errors
+
+    @classmethod
+    def new(cls, medico, paciente, fecha_hora, motivo, usuario):
+        errors = cls.validate(medico, fecha_hora)
+        if errors:
+            return None, errors
+        
+        turno = cls.objects.create(
+            medico=medico,
+            paciente=paciente,
+            fecha_hora=fecha_hora,
+            motivo=motivo,
+            creado_por=usuario
+        )
+        return turno, []
+
+    def update(self, **kwargs):
+        # Validar antes de actualizar
+        medico = kwargs.get('medico', self.medico)
+        fecha_hora = kwargs.get('fecha_hora', self.fecha_hora)
+        errors = self.validate(medico, fecha_hora, self.pk)
+        if errors:
+            return errors
+            
+        for field, value in kwargs.items():
+            setattr(self, field, value)
+        self.save()
+        return []
+
 class Ausencia(models.Model):
-    # Definir campos pendientes aquí
-    pass
+    medico = models.ForeignKey('Medico', on_delete=models.CASCADE, null=True, blank=True)
+    fecha_inicio = models.DateField(null=True, blank=True)
+    fecha_fin = models.DateField(null=True, blank=True)
+    motivo = models.CharField(max_length=200, null=True, blank=True)
+
+    def __str__(self):
+        return f"Ausencia: {self.medico} ({self.fecha_inicio} al {self.fecha_fin})"
 
 class ObraSocial(models.Model):
-    # Definir campos pendientes aquí
-    pass
+    nombre = models.CharField(max_length=100, unique=True)
+    codigo = models.CharField(max_length=20, unique=True)
+
+    def __str__(self):
+        return self.nombre
+
+    @classmethod
+    def new(cls, nombre, codigo):
+        obra_social = cls.objects.create(nombre=nombre, codigo=codigo)
+        return obra_social, []
