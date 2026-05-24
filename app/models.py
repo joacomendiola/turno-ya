@@ -8,11 +8,11 @@ from django.db import models
 
 class Medico(models.Model):
     """Representa a un profesional médico disponible para turnos."""
-    related_name = "medico"
+
     nombre = models.CharField(max_length=100)
     apellido = models.CharField(max_length=100)
     matricula = models.CharField(max_length=20, unique=True)
-    especialidad = models.CharField(max_length=100)
+    especialidad = models.ForeignKey("Especialidad", on_delete=models.PROTECT, related_name="medico")
 
     class Meta:
         ordering = ["apellido", "nombre"]
@@ -48,7 +48,7 @@ class Medico(models.Model):
         if not matricula or not matricula.strip():
             errors.append("La matrícula es obligatoria.")
 
-        if not especialidad or not especialidad.strip():
+        if not isinstance(especialidad, Especialidad):
             errors.append("La especialidad es obligatoria.")
 
         return errors
@@ -67,9 +67,9 @@ class Medico(models.Model):
             nombre=nombre.strip(),
             apellido=apellido.strip(),
             matricula=matricula.strip(),
-            especialidad=especialidad.strip(),
+            especialidad=especialidad,
         )
-        return medico, []
+        return medico, errors
 
     def update(self, nombre, apellido, matricula, especialidad):
         """
@@ -83,9 +83,9 @@ class Medico(models.Model):
         self.nombre = nombre.strip()
         self.apellido = apellido.strip()
         self.matricula = matricula.strip()
-        self.especialidad = especialidad.strip()
+        self.especialidad = especialidad
         self.save()
-        return []
+        return errors
 
 class EspecialidadManager(models.Manager):
     def con_medicos_activos(self):

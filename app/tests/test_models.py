@@ -8,13 +8,19 @@ from django.db import IntegrityError
 
 class MedicoModelTest(TestCase):
     """Verifica comportamiento básico y validaciones del modelo."""
-
+    
     def setUp(self):
+        # Configura las especialidades reales requeridas por la clave foránea
+        self.esp_pediatria = Especialidad.objects.create(nombre="Pediatría")
+        self.esp_cardiologia = Especialidad.objects.create(nombre="Cardiología")
+        self.esp_clinica = Especialidad.objects.create(nombre="Clínica Médica")
+
+        # Crea un médico base utilizando la relación con Pediatría
         self.medico = Medico.objects.create(
             nombre="Laura",
             apellido="Romero",
             matricula="MP-9999",
-            especialidad="Pediatría",
+            especialidad=self.esp_pediatria,
         )
 
     # --- __str__ y métodos simples ---
@@ -32,21 +38,29 @@ class MedicoModelTest(TestCase):
     # --- validate ---
 
     def test_validate_datos_correctos_retorna_lista_vacia(self):
-        errors = Medico.validate("Ana", "García", "MP-0001", "Cardiología")
+        # MODIFICADO: Pasa la instancia objeto 'self.esp_cardiologia'
+        errors = Medico.validate("Ana", "García", "MP-0001", self.esp_cardiologia)
         self.assertEqual(errors, [])
 
     def test_validate_nombre_vacio_retorna_error(self):
-        errors = Medico.validate("", "García", "MP-0001", "Cardiología")
+        # MODIFICADO: Pasa la instancia objeto 'self.esp_cardiologia'
+        errors = Medico.validate("", "García", "MP-0001", self.esp_cardiologia)
         self.assertTrue(len(errors) > 0)
 
     def test_validate_matricula_vacia_retorna_error(self):
-        errors = Medico.validate("Ana", "García", "", "Cardiología")
+        # MODIFICADO: Pasa la instancia objeto 'self.esp_cardiologia'
+        errors = Medico.validate("Ana", "García", "", self.esp_cardiologia)
+        self.assertTrue(len(errors) > 0)
+
+    def test_validate_especialidad_invalida_retorna_error(self):
+        # NUEVO: Comprueba que el método rechace un string en lugar de un objeto Especialidad
+        errors = Medico.validate("Ana", "García", "MP-0001", "Cardiología String")
         self.assertTrue(len(errors) > 0)
 
     # --- new ---
 
     def test_new_crea_medico_con_datos_validos(self):
-        medico, errors = Medico.new("Carlos", "López", "MP-1234", "Clínica Médica")
+        medico, errors = Medico.new("Carlos", "López", "MP-1234", self.esp_clinica)
         self.assertEqual(errors, [])
         self.assertIsNotNone(medico)
         self.assertEqual(medico.apellido, "López")
@@ -62,16 +76,16 @@ class MedicoModelTest(TestCase):
     # --- update ---
 
     def test_update_modifica_datos_correctamente(self):
-        errors = self.medico.update("Laura", "Romero", "MP-9999", "Cardiología")
+        errors = self.medico.update("Laura", "Romero", "MP-9999", self.esp_cardiologia)
         self.assertEqual(errors, [])
         self.medico.refresh_from_db()
-        self.assertEqual(self.medico.especialidad, "Cardiología")
+        self.assertEqual(self.medico.especialidad, self.esp_cardiologia)
 
     def test_update_con_datos_invalidos_no_modifica(self):
         errors = self.medico.update("", "", "", "")
         self.assertTrue(len(errors) > 0)
         self.medico.refresh_from_db()
-        self.assertEqual(self.medico.nombre, "Laura")  # sin cambios
+        self.assertEqual(self.medico.nombre, "Laura")  
 
 
 
@@ -119,12 +133,15 @@ class AuthViewCBVTest(TestCase):
 class ObraSocialModelTest(TestCase):
 
     def setUp(self):
-        # Configura un médico de prueba en la base de datos antes de ejecutar cada test.
+        #Crea una instancia real
+        self.especialidad_test = Especialidad.objects.create(nombre="Cardiología")
+
+        #Pasa la instancia de especialidad creada al Medico para cumplir la relación FK
         self.medico_referencia = Medico.objects.create(
             nombre="Carlos",
             apellido="Gómez",
             matricula="M-5543",
-            especialidad="Cardiología"
+            especialidad=self.especialidad_test
         )
         self.lista_medicos_valida = [self.medico_referencia]
 
@@ -188,9 +205,13 @@ class ObraSocialModelTest(TestCase):
 class ObraSocialSeparatedConstraintsTest(TestCase):
 
     def setUp(self):
-        # Creamos el médico requerido para cumplir la relación ManyToMany obligatoria
+        
+        self.especialidad_test = Especialidad.objects.create(nombre="Pediatría")
         self.medico = Medico.objects.create(
-            nombre="Luis", apellido="Sosa", matricula="M-4432", especialidad="Pediatría"
+            nombre="Luis", 
+            apellido="Sosa", 
+            matricula="M-4432", 
+            especialidad=self.especialidad_test
         )
 
     def test_evita_nombres_duplicados(self):
