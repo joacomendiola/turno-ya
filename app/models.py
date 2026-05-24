@@ -131,7 +131,7 @@ class ObraSocial(models.Model):
     name=models.CharField(max_length=100, unique=True, default="Nombre default")
     sitioWeb=models.URLField(blank=True, unique=True, null=True)
     requiereToken=models.BooleanField(default=False)
-    medicos_disponibles=models.ManyToManyField(Medico, blank=False) 
+    medicos_disponibles=models.ManyToManyField(Medico, blank=False, related_name="obras_sociales") 
 
     class Meta:
         verbose_name_plural = "Obras Sociales"

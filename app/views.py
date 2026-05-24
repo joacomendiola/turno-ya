@@ -1,8 +1,9 @@
 """Vistas iniciales para navegar médicos y pantalla de inicio."""
 
+from multiprocessing import context
 from pyexpat.errors import messages
 
-from django.views.generic import ListView, TemplateView
+from django.views.generic import DetailView, ListView, TemplateView
 from .models import Medico
 
 from django.contrib.auth.views import LoginView, LogoutView
@@ -10,6 +11,7 @@ from django.views.generic import CreateView
 from django.contrib.auth.forms import UserCreationForm
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.shortcuts import get_object_or_404
 
 
 class HomeView(TemplateView):
@@ -25,9 +27,19 @@ class ListaMedicosView(ListView):
     template_name = "clinica/lista_medicos.html"
     context_object_name = "medicos"
 
+class DetailMedicoView (DetailView):
+    template_name = "clinica/detalle_medico.html"
+    model = Medico
+    context_object_name = "medico"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        medico = context["medico"]
+        context["obras_sociales"] = medico.obras_sociales.all()
+        #context["ausencias_cargadas"] = medico.ausencias.all()  # si se implementa el modelo de Ausencia
+        return context
+    
 # TODO: implementar las siguientes vistas:
-# class DetalleMedicoView(...): ...
 # class ListaTurnosView(...): ...
 # class NuevoTurnoView(...): ...
 # class CancelarTurnoView(...): ...
