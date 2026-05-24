@@ -1,6 +1,7 @@
 """Modelos de dominio de TurnoYa."""
 
 from __future__ import annotations
+from tokenize import String
 from xml.parsers.expat import errors
 from django.db import models
 
@@ -128,13 +129,57 @@ class Especialidad(models.Model):
 # ==========================================
 class ObraSocial(models.Model): 
     name=models.CharField(max_length=100, unique=True, default="Nombre default")
-    sitioWeb=models.URLField(blank=True)
+    sitioWeb=models.URLField(blank=True, unique=True, null=True)
     requiereToken=models.BooleanField(default=False)
     medicos_disponibles=models.ManyToManyField(Medico, blank=False) 
 
-
+    def __str__(self):
+            return self.name
     
+    @classmethod
+    def validate(cls, name, sitioWeb, requiereToken, medicos_disponibles):
+        errors = []
+        if not name or not name.strip():
+            errors.append("El nombre de la obra social es obligatorio.")
+        
+        if not isinstance(requiereToken, bool):
+            errors.append("El campo 'requiereToken' debe ser un valor verdadero o falso.")
+        
+        if not isinstance(medicos_disponibles, (list, tuple)):
+            errors.append("El campo 'medicos_disponibles' debe ser una lista de médicos.")
+        elif len(medicos_disponibles) == 0:
+            errors.append("Debe seleccionar al menos un médico disponible.")    
+        return errors
 
+    @classmethod
+    def new(cls, name: str, sitioWeb: str, requiereToken: False, medicos_disponibles: list[Medico]):
+        errors = cls.validate(name, sitioWeb, requiereToken, medicos_disponibles)
+        if errors:
+            return None, errors
+
+        obra_social = cls.objects.create(
+            name=name.strip(),
+            sitioWeb=sitioWeb.strip(),
+            requiereToken=requiereToken,
+            medicos_disponibles=medicos_disponibles
+        )
+        obra_social.medicos_disponibles.set(medicos_disponibles)
+        return obra_social, errors
+
+    @classmethod
+    def update(cls, name: str, sitioWeb: str, requiereToken: False, medicos_disponibles: list[Medico]):
+        errors = cls.validate(name, sitioWeb, requiereToken, medicos_disponibles)
+        if errors:
+            return errors
+
+        obra_social = cls.objects.get(name=name.strip())
+        obra_social.name = name.strip()
+        obra_social.sitioWeb = sitioWeb.strip()
+        obra_social.requiereToken = requiereToken
+        obra_social.medicos_disponibles.set(medicos_disponibles)
+        obra_social.save()
+        return errors
+    
 # ==========================================
 # Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
 # ==========================================
