@@ -58,6 +58,10 @@ class Medico(models.Model):
         return f"Dr/a. {self.apellido}, {self.nombre}"
 
 # 3. Paciente
+class PacienteManager(models.Manager):
+    def buscar_por_apellido(self, apellido):
+        return self.filter(apellido__icontains=apellido)
+
 class Paciente(models.Model):
     nombre = models.CharField(max_length=100)
     apellido = models.CharField(max_length=100)
@@ -65,6 +69,8 @@ class Paciente(models.Model):
     email = models.EmailField(unique=True)
     telefono = models.BigIntegerField(blank=True, null=True)
     usuario = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    objects = PacienteManager()
 
     def __str__(self):
         return f"{self.apellido}, {self.nombre} (DNI: {self.dni})"
@@ -83,6 +89,15 @@ class Paciente(models.Model):
             return None, errors
         paciente = cls.objects.create(nombre=nombre, apellido=apellido, dni=dni, email=email, usuario=usuario)
         return paciente, []
+
+    def update(self, **kwargs):
+        for field, value in kwargs.items():
+            setattr(self, field, value)
+        errors = self.validate(self.nombre, self.apellido, str(self.dni), self.email)
+        if errors:
+            return errors
+        self.save()
+        return []
 
 # 4. Turno
 class Turno(models.Model):
@@ -109,12 +124,7 @@ class Turno(models.Model):
     @classmethod
     def validate(cls, medico, fecha_hora, exclude_id=None):
         errors = []
-        
-        # 1. Validación de fecha en el pasado
-        if fecha_hora < timezone.now():
-            errors.append("La fecha del turno no puede ser en el pasado.")
-        
-        # 2. Validación de turno duplicado (overlapping)
+
         query = cls.objects.filter(medico=medico, fecha_hora=fecha_hora).exclude(estado='cancelado')
         if exclude_id:
             query = query.exclude(pk=exclude_id)
@@ -122,11 +132,8 @@ class Turno(models.Model):
         if query.exists():
             errors.append("El médico ya tiene un turno asignado en ese horario.")
             
-        # Validación de Ausencia (Tarea 3.2)
-        # Extraemos solo la fecha (sin la hora) para cruzarla con los días de licencia
+        # 2. Validación de Ausencia (Tarea 3.2)
         fecha_turno = fecha_hora.date()
-        
-        # Buscamos si el médico tiene registrada una ausencia que incluya el día del turno
         ausencia_activa = medico.ausencia_set.filter(
             fecha_inicio__lte=fecha_turno,
             fecha_fin__gte=fecha_turno
