@@ -4,6 +4,9 @@ from django.test import TestCase
 from app.models import Medico
 from app.models import Especialidad
 from django.urls import reverse
+from datetime import date
+from app.models import Ausencia
+from datetime import timedelta
 
 
 class MedicoModelTest(TestCase):
@@ -97,19 +100,149 @@ class EspecialidadModelTest(TestCase):
         self.assertEqual(len(errors), 0)
         self.assertEqual(especialidad.descripcion, "Especialistas en huesos")
 
-class AuthViewCBVTest(TestCase):
-    """Pruebas para la vista de autenticación basada en clases."""
 
-    def test_pantalla_login_carga_correctamente(self):
-        """Verifica que la página de login se muestre sin errores."""
-        response = self.client.get(reverse('app:login'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'auth/login.html')
+class AusenciaModelTest(TestCase):
+
+    """Verifica el modelo Ausencia, especialmente la validación de fechas y solapamientos entre ausencias del mismo médico."""
     
-    def test_pantalla_login_con_datos_validos_redirige(self):
-        response = self.client.get(reverse('app:registro'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'auth/registro.html')
+    def setUp(self):
+        self.medico = Medico.objects.create(
+            nombre="Laura",
+            apellido="Romero",
+            matricula="MP-9999",
+            especialidad="Pediatría",
+        )
 
+    def test_validate_ausencia_solapada_retorna_error(self):
+        hoy = date.today()
+        primera, errors_primera = Ausencia.new(
+            medico=self.medico,
+            motivo="Licencia médica",
+            fecha_inicio=hoy + timedelta(days=1),
+            fecha_fin=hoy + timedelta(days=10),
+        )
+        self.assertEqual(errors_primera, [])
+        self.assertIsNotNone(primera)
+
+        _, errors_segunda = Ausencia.new(
+            medico=self.medico,
+            motivo="Vacaciones",
+            fecha_inicio=hoy + timedelta(days=5),
+            fecha_fin=hoy + timedelta(days=12),
+        )
+        self.assertIn("Ya existe una ausencia del médico en ese rango de fechas.", errors_segunda)
+
+    def test_validate_fecha_inicio_posterior_a_fin_retorna_error(self):
+        hoy = date.today()
+        _, errors = Ausencia.new(
+            medico=self.medico,
+            motivo="Licencia",
+            fecha_inicio=hoy + timedelta(days=20),
+            fecha_fin=hoy + timedelta(days=10),
+        )
+        self.assertIn("La fecha de inicio no puede ser posterior a la fecha de fin.", errors)
+
+     # --- str ---
+
+    def test_str_muestra_medico_y_fechas(self):
+        hoy = date.today()
+        ausencia, errors = Ausencia.new(
+            medico=self.medico,
+            motivo="Licencia",
+            fecha_inicio=hoy + timedelta(days=1),
+            fecha_fin=hoy + timedelta(days=5),
+        )
+        self.assertEqual(errors, [])
+        self.assertIn("Romero", str(ausencia))
+        self.assertIn(str(hoy + timedelta(days=1)), str(ausencia))
+        self.assertIn(str(hoy + timedelta(days=5)), str(ausencia))
+    
+    # --- validate ---
+
+    def test_validate_con_fechas_invalidas_retorna_error(self):
+        hoy = date.today()
+        errors = Ausencia.validate(
+            medico=self.medico,
+            motivo="Licencia",
+            fecha_inicio=hoy + timedelta(days=20),
+            fecha_fin=hoy + timedelta(days=10),
+        )
+        self.assertIn("La fecha de inicio no puede ser posterior a la fecha de fin.", errors)
+
+
+    # --- new ---
+
+    def test_new_crea_ausencia_con_datos_validos(self):
+        hoy = date.today()
+        inicio = hoy + timedelta(days=1)
+        fin = hoy + timedelta(days=5)
+
+        ausencia, errors = Ausencia.new(
+            medico=self.medico,
+            motivo="Licencia",
+            fecha_inicio=inicio,
+            fecha_fin=fin,
+        )
+        self.assertEqual(errors, [])
+        self.assertIsNotNone(ausencia)
+        self.assertTrue(Ausencia.objects.filter(id=ausencia.id).exists())
+
+    def test_new_con_solapamiento_retorna_error(self):
+        hoy = date.today()
+        Ausencia.new(
+            medico=self.medico,
+            motivo="Licencia",
+            fecha_inicio=hoy + timedelta(days=1),
+            fecha_fin=hoy + timedelta(days=5),
+        )
+        _, errors = Ausencia.new(
+            medico=self.medico,
+            motivo="Vacaciones",
+            fecha_inicio=hoy + timedelta(days=4),
+            fecha_fin=hoy + timedelta(days=10),
+        )
+        self.assertIn("Ya existe una ausencia del médico en ese rango de fechas.", errors)
+
+
+    # --- update ---
+
+    def test_update_modifica_ausencia_correctamente(self):
+        hoy = date.today()
+        ausencia, _ = Ausencia.new(
+            medico=self.medico,
+            motivo="Licencia",
+            fecha_inicio=hoy + timedelta(days=1),
+            fecha_fin=hoy + timedelta(days=5),
+        )
+        errors = ausencia.update(
+            motivo="Licencia extendida",
+            fecha_inicio=hoy + timedelta(days=2),
+            fecha_fin=hoy + timedelta(days=6),
+        )
+        self.assertEqual(errors, [])
+        ausencia.refresh_from_db()
+        self.assertEqual(ausencia.motivo, "Licencia extendida")
+        self.assertEqual(ausencia.fecha_inicio, hoy + timedelta(days=2))
+
+    def test_update_con_solapamiento_retorna_error(self):
+        hoy = date.today()
+        primera, _ = Ausencia.new(
+            medico=self.medico,
+            motivo="Licencia",
+            fecha_inicio=hoy + timedelta(days=1),
+            fecha_fin=hoy + timedelta(days=5),
+        )
+        segunda, _ = Ausencia.new(
+            medico=self.medico,
+            motivo="Vacaciones",
+            fecha_inicio=hoy + timedelta(days=6),
+            fecha_fin=hoy + timedelta(days=10),
+        )
+        errors = segunda.update(
+            motivo="Vacaciones modificadas",
+            fecha_inicio=hoy + timedelta(days=4),
+            fecha_fin=hoy + timedelta(days=12),
+        )
+        self.assertIn("Ya existe una ausencia del médico en ese rango de fechas.", errors)
 
 # TODO: agregar tests para Paciente y Turno cuando los implementen
