@@ -185,7 +185,7 @@ def turnos_por_medico_ordenados(medico_id: int) -> QuerySet: ...
 
 ## Convenciones del proyecto
 
-- Vistas: FBV (Function-Based Views), no CBV
+- Vistas: CBV, no FBV (Function-Based Views)
 - URLs: siempre con `app_name` y `name`, referenciar con `{% url 'app:nombre' %}`
 - Templates: siempre extienden `base.html`
 - Modelos: siempre incluir `__str__`, `validate`, `new`, `update`
