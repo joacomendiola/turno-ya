@@ -50,7 +50,8 @@
     <ul class="list-group">
       {% for turno in prox_turnos %}
       <li class="list-group-item">
-        {{ turno.fecha }} {{ turno.hora }} - {{ turno.medico }} / {{ turno.paciente }}
+        {{ turno.fecha_hora|date:"d/m/Y H:i" }}
+        - {{ turno.medico }} / {{ turno.paciente }}
       </li>
       {% endfor %}
     </ul>

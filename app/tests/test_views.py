@@ -1,19 +1,38 @@
 from datetime import date
 from django.test import TestCase
 from django.urls import reverse
-from app.models import Medico, Paciente, Turno, Ausencia
+from app.models import Especialidad, Medico, Paciente, Turno, Ausencia
+from django.contrib.auth.models import User
 
 class HomeViewTest(TestCase):
     """Pruebas para la vista de inicio (HomeView)."""
     def setUp(self):
+        self.especialidad = Especialidad.objects.create(
+            nombre="Pediatría"
+        )
         self.medico = Medico.objects.create(
             nombre="Laura",
             apellido="Romero",
-            matricula="MP-9999",
-            especialidad="Pediatría",
+            matricula="9999",
+            especialidad=self.especialidad
+            
         )
-        self.paciente = Paciente.objects.create()  # si tu modelo ya tiene campos, ajusta aquí
-        self.turno = Turno.objects.create()        # si tu modelo ya tiene campos, ajusta aquí
+        usuario = User.objects.create_user(username="testuser", password="testpass")
+        self.paciente = Paciente.objects.create(
+            nombre="Juan",
+            apellido="Pérez",
+            dni="12345678",
+            email="juan@gmail.com",
+            usuario=usuario
+        )  
+        self.turno = Turno.objects.create(
+            medico=self.medico,
+            paciente=self.paciente,
+            fecha_hora=date.today(),
+            motivo="Consulta general",
+            estado="pendiente",
+            creado_por=usuario
+        )        
         Ausencia.objects.create(
             medico=self.medico,
             motivo="Licencia",

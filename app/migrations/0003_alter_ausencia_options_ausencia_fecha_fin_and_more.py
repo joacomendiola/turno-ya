@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0002_ausencia_especialidad_obrasocial_paciente_turno'),
+        ('app', '0002_alter_medico_matricula_alter_paciente_dni_and_more'),
     ]
 
     operations = [
@@ -26,16 +26,8 @@ class Migration(migrations.Migration):
             name='fecha_inicio',
             field=models.DateField(default=datetime.date.today),
         ),
-        migrations.AddField(
-            model_name='ausencia',
-            name='medico',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='app.medico'),
-        ),
-        migrations.AddField(
-            model_name='ausencia',
-            name='motivo',
-            field=models.CharField(blank=True, max_length=200, null=True),
-        ),
+    
+      
         migrations.AddField(
             model_name='paciente',
             name='nombre',

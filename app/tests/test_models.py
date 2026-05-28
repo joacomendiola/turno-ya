@@ -7,7 +7,6 @@ from django.urls import reverse
 from app.models import Medico, Paciente, Turno, Especialidad, Ausencia
 import datetime
 from datetime import date
-from app.models import Ausencia
 from datetime import timedelta
 
 
@@ -82,11 +81,13 @@ class AusenciaModelTest(TestCase):
     """Verifica el modelo Ausencia, especialmente la validación de fechas y solapamientos entre ausencias del mismo médico."""
     
     def setUp(self):
+        self.especialidad = Especialidad.objects.create(nombre="Pediatría")
+
         self.medico = Medico.objects.create(
             nombre="Laura",
             apellido="Romero",
-            matricula="MP-9999",
-            especialidad="Pediatría",
+            matricula="9999",
+            especialidad=self.especialidad,
         )
 
     def test_validate_ausencia_solapada_retorna_error(self):
