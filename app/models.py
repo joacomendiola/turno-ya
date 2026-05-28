@@ -167,16 +167,6 @@ class Turno(models.Model):
         self.save()
         return []
 
-# 5. Ausencia y ObraSocial
-class Ausencia(models.Model):
-    medico = models.ForeignKey(Medico, on_delete=models.CASCADE, null=True, blank=True)
-    fecha_inicio = models.DateField(null=True, blank=True)
-    fecha_fin = models.DateField(null=True, blank=True)
-    motivo = models.CharField(max_length=200, null=True, blank=True)
-
-    def __str__(self):
-        return f"Ausencia: {self.medico} ({self.fecha_inicio} al {self.fecha_fin})"
-
 class ObraSocial(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     codigo = models.CharField(max_length=20, unique=True)
@@ -282,17 +272,3 @@ class Ausencia(models.Model):
 # ==========================================
 # Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
 # ==========================================
-class ObraSocial(models.Model): pass
-
-class Paciente(models.Model):
-    nombre = models.CharField(max_length=100, blank=True)
-    def __str__(self):
-        return self.nombre or "Paciente sin nombre"
- # TODO: agrego campo mínimo para utilizar el admin, ajustar según modelo real
-
-class Turno(models.Model):
-    fecha = models.DateField(null=True, blank=True)
-    def __str__(self):
-        return str(self.fecha) if self.fecha else "Turno sin fecha"
-
- # TODO: agrego campo mínimo para utilizar el formulario de turno, ajustar según modelo real
