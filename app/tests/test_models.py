@@ -96,14 +96,14 @@ class TurnoModelTest(TestCase):
         self.paciente = Paciente.objects.create(nombre="P", apellido="P", dni=123, email="p@p.com", usuario=self.user)
 
     def test_creacion_turno_valido(self):
-        fecha = timezone.now() + datetime.timedelta(days=1)
+        fecha = timezone.now() + timedelta(days=1)
         turno, errors = Turno.new(self.medico, self.paciente, fecha, "Dolor", self.user)
         self.assertEqual(errors, [])
         self.assertEqual(turno.estado, 'pendiente')
 
     def test_turno_duplicado_falla(self):
         """Tarea 3.4: Validar que no existan dos turnos para el mismo médico a la misma hora"""
-        fecha = timezone.now() + datetime.timedelta(days=1)
+        fecha = timezone.now() + timedelta(days=1)
         Turno.new(self.medico, self.paciente, fecha, "Consulta", self.user)
         
         # Intentar segundo turno misma hora
@@ -112,12 +112,12 @@ class TurnoModelTest(TestCase):
 
     def test_turno_en_fecha_ausencia_falla(self):
         """Tarea 3.2: Validar que no se puede sacar turno si el médico está de licencia"""
-        fecha_turno = timezone.now() + datetime.timedelta(days=5)
+        fecha_turno = timezone.now() + timedelta(days=5)
         # Creamos una ausencia que cubre esa fecha
         Ausencia.objects.create(
             medico=self.medico, 
             fecha_inicio=timezone.now().date(), 
-            fecha_fin=fecha_turno.date() + datetime.timedelta(days=1)
+            fecha_fin=fecha_turno.date() + timedelta(days=1)
         )
         
         turno, errors = Turno.new(self.medico, self.paciente, fecha_turno, "Consulta", self.user)
