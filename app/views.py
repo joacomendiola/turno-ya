@@ -44,7 +44,7 @@ class ListaMedicosView(LoginRequiredMixin, ListView):
 class DetalleMedicoView(LoginRequiredMixin, DetailView):
     """Muestra el detalle de un médico, incluyendo su agenda."""
 
-    template_name = "clinica/detalle_medico.html"
+    template_name = "clinica/lista_medicos.html"
     model = Medico
     context_object_name = "medico"
 
@@ -52,14 +52,8 @@ class DetalleMedicoView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         medico = context["medico"]
         context["obras_sociales"] = medico.obras_sociales.all()
-        #context["ausencias_cargadas"] = medico.ausencias.all()  # si se implementa el modelo de Ausencia
+        context["ausencias_cargadas"] = medico.ausencia_set.all()  # si se implementa el modelo de Ausencia
         return context
-    
-# TODO: implementar las siguientes vistas:
-# class ListaTurnosView(...): ...
-# class NuevoTurnoView(...): ...
-# class CancelarTurnoView(...): ...
-# class ListaPacientesView(...): ...
 
 class CustomLoginView(LoginView):
     template_name = 'auth/login.html'
