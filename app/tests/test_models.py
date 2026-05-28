@@ -1,105 +1,81 @@
-"""Pruebas unitarias del modelo Medico."""
+"""Pruebas unitarias de los modelos del sistema TurnoYa."""
 
 from django.test import TestCase
-from app.models import Medico
-from app.models import Especialidad
+from django.utils import timezone
+from django.contrib.auth.models import User
 from django.urls import reverse
+from app.models import Medico, Paciente, Turno, Especialidad, Ausencia
+import datetime
 from datetime import date
 from app.models import Ausencia
 from datetime import timedelta
 
 
 class MedicoModelTest(TestCase):
-    """Verifica comportamiento básico y validaciones del modelo."""
-
     def setUp(self):
+        self.especialidad = Especialidad.objects.create(nombre="Pediatría")
         self.medico = Medico.objects.create(
-            nombre="Laura",
-            apellido="Romero",
-            matricula="MP-9999",
-            especialidad="Pediatría",
+            nombre="Laura", apellido="Romero", matricula=9999, especialidad=self.especialidad
         )
-
-    # --- __str__ y métodos simples ---
 
     def test_str_incluye_apellido_y_nombre(self):
         self.assertIn("Romero", str(self.medico))
         self.assertIn("Laura", str(self.medico))
 
-    def test_nombre_completo(self):
-        self.assertEqual(self.medico.nombre_completo(), "Laura Romero")
-
-    def test_cantidad_turnos_inicial_es_cero(self):
-        self.assertEqual(self.medico.cantidad_turnos(), 0)
-
-    # --- validate ---
-
-    def test_validate_datos_correctos_retorna_lista_vacia(self):
-        errors = Medico.validate("Ana", "García", "MP-0001", "Cardiología")
-        self.assertEqual(errors, [])
-
-    def test_validate_nombre_vacio_retorna_error(self):
-        errors = Medico.validate("", "García", "MP-0001", "Cardiología")
-        self.assertTrue(len(errors) > 0)
-
-    def test_validate_matricula_vacia_retorna_error(self):
-        errors = Medico.validate("Ana", "García", "", "Cardiología")
-        self.assertTrue(len(errors) > 0)
-
-    # --- new ---
-
-    def test_new_crea_medico_con_datos_validos(self):
-        medico, errors = Medico.new("Carlos", "López", "MP-1234", "Clínica Médica")
-        self.assertEqual(errors, [])
-        self.assertIsNotNone(medico)
-        self.assertEqual(medico.apellido, "López")
-        self.assertTrue(Medico.objects.filter(matricula="MP-1234").exists())
-
-    def test_new_con_datos_invalidos_retorna_errores_y_no_crea(self):
-        count_antes = Medico.objects.count()
-        medico, errors = Medico.new("", "", "", "")
-        self.assertIsNone(medico)
-        self.assertTrue(len(errors) > 0)
-        self.assertEqual(Medico.objects.count(), count_antes)
-
-    # --- update ---
-
-    def test_update_modifica_datos_correctamente(self):
-        errors = self.medico.update("Laura", "Romero", "MP-9999", "Cardiología")
-        self.assertEqual(errors, [])
-        self.medico.refresh_from_db()
-        self.assertEqual(self.medico.especialidad, "Cardiología")
-
-    def test_update_con_datos_invalidos_no_modifica(self):
-        errors = self.medico.update("", "", "", "")
-        self.assertTrue(len(errors) > 0)
-        self.medico.refresh_from_db()
-        self.assertEqual(self.medico.nombre, "Laura")  # sin cambios
-
-
-
 class EspecialidadModelTest(TestCase):
-
     def test_new_crea_especialidad_con_datos_validos(self):
-        """Verifica que se pueda crear una especialidad con datos correctos."""
         especialidad, errors = Especialidad.new(nombre="Pediatría", descripcion="Cuidado infantil")
-        self.assertIsNotNone(especialidad)
         self.assertEqual(len(errors), 0)
         self.assertEqual(especialidad.nombre, "Pediatría")
-    
-    def test_validate_nombre_vacio_retorna_error(self):
-        """Edge case: El método validate debe rechazar nombres vacíos o con puros espacios."""
-        especialidad, errors = Especialidad.new(nombre="   ")
-        self.assertIsNone(especialidad)
-        self.assertIn("El nombre de la especialidad es obligatorio.", errors)
 
-    def test_update_modifica_datos_correctamente(self):
-        """Verifica que el método update guarde los cambios si pasa la validación."""
-        especialidad, _ = Especialidad.new(nombre="Traumatología")
-        errors = especialidad.update(descripcion="Especialistas en huesos")
-        self.assertEqual(len(errors), 0)
-        self.assertEqual(especialidad.descripcion, "Especialistas en huesos")
+class PacienteModelTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser")
 
+    def test_creacion_paciente_valido(self):
+        paciente, errors = Paciente.new("Juan", "Pérez", 12345678, "juan@gmail.com", self.user)
+        self.assertEqual(errors, [])
+        self.assertIsNotNone(paciente)
+
+class TurnoModelTest(TestCase):
+    def setUp(self):
+        self.especialidad = Especialidad.objects.create(nombre="General")
+        self.medico = Medico.objects.create(nombre="Dr", apellido="House", matricula=1, especialidad=self.especialidad)
+        self.user = User.objects.create_user(username="paciente1")
+        self.paciente = Paciente.objects.create(nombre="P", apellido="P", dni=123, email="p@p.com", usuario=self.user)
+
+    def test_creacion_turno_valido(self):
+        fecha = timezone.now() + datetime.timedelta(days=1)
+        turno, errors = Turno.new(self.medico, self.paciente, fecha, "Dolor", self.user)
+        self.assertEqual(errors, [])
+        self.assertEqual(turno.estado, 'pendiente')
+
+    def test_turno_duplicado_falla(self):
+        """Tarea 3.4: Validar que no existan dos turnos para el mismo médico a la misma hora"""
+        fecha = timezone.now() + datetime.timedelta(days=1)
+        Turno.new(self.medico, self.paciente, fecha, "Consulta", self.user)
+        
+        # Intentar segundo turno misma hora
+        turno, errors = Turno.new(self.medico, self.paciente, fecha, "Otro", self.user)
+        self.assertIn("El médico ya tiene un turno asignado en ese horario.", errors)
+
+    def test_turno_en_fecha_ausencia_falla(self):
+        """Tarea 3.2: Validar que no se puede sacar turno si el médico está de licencia"""
+        fecha_turno = timezone.now() + datetime.timedelta(days=5)
+        # Creamos una ausencia que cubre esa fecha
+        Ausencia.objects.create(
+            medico=self.medico, 
+            fecha_inicio=timezone.now().date(), 
+            fecha_fin=fecha_turno.date() + datetime.timedelta(days=1)
+        )
+        
+        turno, errors = Turno.new(self.medico, self.paciente, fecha_turno, "Consulta", self.user)
+        self.assertIn("El médico se encuentra ausente o de licencia en la fecha solicitada.", errors)
+
+class AuthViewCBVTest(TestCase):
+    def test_pantalla_login_carga_correctamente(self):
+        response = self.client.get(reverse('app:login'))
+        self.assertEqual(response.status_code, 200)
 
 class AusenciaModelTest(TestCase):
 

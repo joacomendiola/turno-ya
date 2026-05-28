@@ -2,99 +2,22 @@
 
 from __future__ import annotations
 from django.db import models
-from datetime import date
+from django.contrib.auth.models import User
+from django.utils import timezone
+from django.core.exceptions import ValidationError
 
-class Medico(models.Model):
-    """Representa a un profesional médico disponible para turnos."""
-
-    nombre = models.CharField(max_length=100)
-    apellido = models.CharField(max_length=100)
-    matricula = models.CharField(max_length=20, unique=True)
-    especialidad = models.CharField(max_length=100)
-
-    class Meta:
-        ordering = ["apellido", "nombre"]
-
-    def __str__(self):
-        """Retorna una etiqueta legible para listados y admin."""
-        return f"Dr/a. {self.apellido}, {self.nombre}"
-
-    def nombre_completo(self):
-        """Retorna nombre y apellido concatenados."""
-        return f"{self.nombre} {self.apellido}"
-
-    def cantidad_turnos(self):
-        """Retorna la cantidad total de turnos asociados a este médico."""
-        if not hasattr(self, "turno_set"):
-            return 0
-        return self.turno_set.count()
-
-    @classmethod
-    def validate(cls, nombre, apellido, matricula, especialidad):
-        """
-        Valida los datos del médico. Retorna una lista de errores.
-        Si la lista está vacía, los datos son válidos.
-        """
-        errors = []
-
-        if not nombre or not nombre.strip():
-            errors.append("El nombre es obligatorio.")
-
-        if not apellido or not apellido.strip():
-            errors.append("El apellido es obligatorio.")
-
-        if not matricula or not matricula.strip():
-            errors.append("La matrícula es obligatoria.")
-
-        if not especialidad or not especialidad.strip():
-            errors.append("La especialidad es obligatoria.")
-
-        return errors
-
-    @classmethod
-    def new(cls, nombre, apellido, matricula, especialidad):
-        """
-        Crea y persiste un nuevo médico si los datos son válidos.
-        Retorna (instancia, errors). Si hay errores, instancia es None.
-        """
-        errors = cls.validate(nombre, apellido, matricula, especialidad)
-        if errors:
-            return None, errors
-
-        medico = cls.objects.create(
-            nombre=nombre.strip(),
-            apellido=apellido.strip(),
-            matricula=matricula.strip(),
-            especialidad=especialidad.strip(),
-        )
-        return medico, []
-
-    def update(self, nombre, apellido, matricula, especialidad):
-        """
-        Actualiza los datos del médico si los datos son válidos.
-        Retorna una lista de errores. Si está vacía, la actualización fue exitosa.
-        """
-        errors = self.__class__.validate(nombre, apellido, matricula, especialidad)
-        if errors:
-            return errors
-
-        self.nombre = nombre.strip()
-        self.apellido = apellido.strip()
-        self.matricula = matricula.strip()
-        self.especialidad = especialidad.strip()
-        self.save()
-        return []
-
+# 1. Especialidad
 class EspecialidadManager(models.Manager):
     def con_medicos_activos(self):
         return self.annotate(num_medicos=models.Count("medico")).filter(num_medicos__gt=0)
+from datetime import date
 
 class Especialidad(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     descripcion = models.TextField(blank=True)
 
     objects = EspecialidadManager()
-    
+
     def __str__(self):
         return self.nombre
 
@@ -102,7 +25,7 @@ class Especialidad(models.Model):
         errors = []
         if not self.nombre or not self.nombre.strip():
             errors.append("El nombre de la especialidad es obligatorio.")
-            return errors
+        return errors
         
     @classmethod
     def new(cls, **kwargs):
@@ -122,6 +45,149 @@ class Especialidad(models.Model):
         self.save()
         return []
 
+# 2. Medico
+class Medico(models.Model):
+    nombre = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100)
+    matricula = models.PositiveIntegerField(unique=True) 
+    especialidad = models.ForeignKey(Especialidad, on_delete=models.PROTECT)
+
+    class Meta:
+        ordering = ["apellido", "nombre"]
+
+    def __str__(self):
+        return f"Dr/a. {self.apellido}, {self.nombre}"
+
+# 3. Paciente
+class PacienteManager(models.Manager):
+    def buscar_por_apellido(self, apellido):
+        return self.filter(apellido__icontains=apellido)
+
+class Paciente(models.Model):
+    nombre = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100)
+    dni = models.BigIntegerField(unique=True) 
+    email = models.EmailField(unique=True)
+    telefono = models.BigIntegerField(blank=True, null=True)
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    objects = PacienteManager()
+
+    def __str__(self):
+        return f"{self.apellido}, {self.nombre} (DNI: {self.dni})"
+
+    @classmethod
+    def validate(cls, nombre, apellido, dni, email):
+        errors = []
+        if not dni:
+            errors.append("El DNI es obligatorio.")
+        return errors
+
+    @classmethod
+    def new(cls, nombre, apellido, dni, email, usuario):
+        errors = cls.validate(nombre, apellido, dni, email)
+        if errors:
+            return None, errors
+        paciente = cls.objects.create(nombre=nombre, apellido=apellido, dni=dni, email=email, usuario=usuario)
+        return paciente, []
+
+    def update(self, **kwargs):
+        for field, value in kwargs.items():
+            setattr(self, field, value)
+        errors = self.validate(self.nombre, self.apellido, str(self.dni), self.email)
+        if errors:
+            return errors
+        self.save()
+        return []
+
+# 4. Turno
+class Turno(models.Model):
+    ESTADOS = [('pendiente', 'Pendiente'), ('confirmado', 'Confirmado'), ('cancelado', 'Cancelado')]
+    
+    medico = models.ForeignKey(Medico, on_delete=models.CASCADE)
+    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE)
+    fecha_hora = models.DateTimeField(default=timezone.now)
+    motivo = models.TextField()
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('medico', 'fecha_hora')
+
+    def __str__(self):
+        return f"Turno {self.id} - {self.paciente}"
+
+    def clean(self):
+        errors = Turno.validate(self.medico, self.fecha_hora, self.pk)
+        if errors:
+            raise ValidationError({'fecha_hora': errors})
+
+    @classmethod
+    def validate(cls, medico, fecha_hora, exclude_id=None):
+        errors = []
+
+        query = cls.objects.filter(medico=medico, fecha_hora=fecha_hora).exclude(estado='cancelado')
+        if exclude_id:
+            query = query.exclude(pk=exclude_id)
+            
+        if query.exists():
+            errors.append("El médico ya tiene un turno asignado en ese horario.")
+            
+        # 2. Validación de Ausencia (Tarea 3.2)
+        fecha_turno = fecha_hora.date()
+        ausencia_activa = medico.ausencia_set.filter(
+            fecha_inicio__lte=fecha_turno,
+            fecha_fin__gte=fecha_turno
+        ).exists()
+        
+        if ausencia_activa:
+            errors.append("El médico se encuentra ausente o de licencia en la fecha solicitada.")
+            
+        return errors
+
+    @classmethod
+    def new(cls, medico, paciente, fecha_hora, motivo, usuario):
+        errors = cls.validate(medico, fecha_hora)
+        if errors:
+            return None, errors
+        
+        turno = cls.objects.create(
+            medico=medico, paciente=paciente, fecha_hora=fecha_hora, motivo=motivo, creado_por=usuario
+        )
+        return turno, []
+
+    def update(self, **kwargs):
+        medico = kwargs.get('medico', self.medico)
+        fecha_hora = kwargs.get('fecha_hora', self.fecha_hora)
+        errors = self.validate(medico, fecha_hora, self.pk)
+        if errors:
+            return errors
+        for field, value in kwargs.items():
+            setattr(self, field, value)
+        self.save()
+        return []
+
+# 5. Ausencia y ObraSocial
+class Ausencia(models.Model):
+    medico = models.ForeignKey(Medico, on_delete=models.CASCADE, null=True, blank=True)
+    fecha_inicio = models.DateField(null=True, blank=True)
+    fecha_fin = models.DateField(null=True, blank=True)
+    motivo = models.CharField(max_length=200, null=True, blank=True)
+
+    def __str__(self):
+        return f"Ausencia: {self.medico} ({self.fecha_inicio} al {self.fecha_fin})"
+
+class ObraSocial(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+    codigo = models.CharField(max_length=20, unique=True)
+
+    def __str__(self):
+        return self.nombre
+
+    @classmethod
+    def new(cls, nombre, codigo):
+        obra_social = cls.objects.create(nombre=nombre, codigo=codigo)
+        return obra_social, []
 
 class Ausencia(models.Model):
 
