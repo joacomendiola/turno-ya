@@ -34,9 +34,10 @@ Permite registrar médicos, pacientes y turnos, con autenticación de usuarios y
 
 | Nombre | Usuario GitHub |
 |--------|---------------|
-| ... | [@usuario](https://github.com/usuario) |
-| ... | [@usuario](https://github.com/usuario) |
-| ... | [@usuario](https://github.com/usuario) |
+| Joaquin Mendiola | [@joacomendiola](https://github.com/joacomendiola) |
+| Gaston Mendiola | [@GAMS01](https://github.com/GAMS01) |
+| Alexis Chambi | [@Alewch](https://github.com/Alewch) |
+| Nehuen hervias | [@nehuen-hervias](https://github.com/nehuen-hervias) |
 
 ---
 

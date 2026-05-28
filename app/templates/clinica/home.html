@@ -10,8 +10,53 @@
   </div>
 </div>
 
-<!-- TODO: reemplazar con estadísticas reales del contexto -->
 <div class="row g-3">
-
+  <div class="col-md-3">
+    <div class="card p-3">
+      <h5>Total de médicos</h5>
+      <p class="display-6">{{ total_medicos }}</p>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3">
+      <h5>Total de pacientes</h5>
+      <p class="display-6">{{ total_pacientes }}</p>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3">
+      <h5>Total de turnos</h5>
+      <p class="display-6">{{ total_turnos }}</p>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3">
+      <h5>Turnos confirmados</h5>
+      <p class="display-6">{{ turnos_confirmados }}</p>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3">
+      <h5>Ausencias activas</h5>
+      <p class="display-6">{{ ausencias_activas }}</p>
+    </div>
+  </div>
 </div>
+
+{% if prox_turnos %}
+<div class="row mt-4">
+  <div class="col">
+    <h2>Próximos turnos</h2>
+    <ul class="list-group">
+      {% for turno in prox_turnos %}
+      <li class="list-group-item">
+        {{ turno.fecha_hora|date:"d/m/Y H:i" }}
+        - {{ turno.medico }} / {{ turno.paciente }}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endif %}
+
 {% endblock %}

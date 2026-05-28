@@ -1,0 +1,79 @@
+from datetime import date
+from django.test import TestCase
+from django.urls import reverse
+from app.models import Especialidad, Medico, Paciente, Turno, Ausencia
+from django.contrib.auth.models import User
+
+class HomeViewTest(TestCase):
+    """Pruebas para la vista de inicio (HomeView)."""
+    def setUp(self):
+        self.especialidad = Especialidad.objects.create(
+            nombre="Pediatría"
+        )
+        self.medico = Medico.objects.create(
+            nombre="Laura",
+            apellido="Romero",
+            matricula="9999",
+            especialidad=self.especialidad
+            
+        )
+        usuario = User.objects.create_user(username="testuser", password="testpass")
+        self.paciente = Paciente.objects.create(
+            nombre="Juan",
+            apellido="Pérez",
+            dni="12345678",
+            email="juan@gmail.com",
+            usuario=usuario
+        )  
+        self.turno = Turno.objects.create(
+            medico=self.medico,
+            paciente=self.paciente,
+            fecha_hora=date.today(),
+            motivo="Consulta general",
+            estado="pendiente",
+            creado_por=usuario
+        )        
+        Ausencia.objects.create(
+            medico=self.medico,
+            motivo="Licencia",
+            fecha_inicio=date.today(),
+            fecha_fin=date.today(),
+        )
+
+    def test_home_loads_successfully(self):
+        response = self.client.get(reverse("app:home"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clinica/home.html")
+
+    def test_home_context_contains_estadisticas(self):
+        response = self.client.get(reverse("app:home"))
+        self.assertIn("total_medicos", response.context)
+        self.assertIn("total_pacientes", response.context)
+        self.assertIn("total_turnos", response.context)
+        self.assertIn("turnos_confirmados", response.context)
+        self.assertIn("turnos_cancelados", response.context)
+        self.assertIn("prox_turnos", response.context)
+        self.assertIn("medicos_por_especialidad", response.context)
+        self.assertIn("ausencias_activas", response.context)
+
+    def test_home_renders_cards_de_estadisticas(self):
+        response = self.client.get(reverse("app:home"))
+        self.assertContains(response, "Panel de inicio")
+        self.assertContains(response, "Total de médicos")
+        self.assertContains(response, "Total de pacientes")
+        self.assertContains(response, "Ausencias activas")
+
+
+class AuthViewCBVTest(TestCase):
+    """Pruebas para la vista de autenticación basada en clases."""
+
+    def test_pantalla_login_carga_correctamente(self):
+        """Verifica que la página de login se muestre sin errores."""
+        response = self.client.get(reverse('app:login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'auth/login.html')
+    
+    def test_pantalla_login_con_datos_validos_redirige(self):
+        response = self.client.get(reverse('app:registro'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'auth/registro.html')
