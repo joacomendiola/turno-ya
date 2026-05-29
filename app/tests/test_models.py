@@ -133,7 +133,7 @@ class AusenciaModelTest(TestCase):
     """Verifica el modelo Ausencia, especialmente la validación de fechas y solapamientos entre ausencias del mismo médico."""
     
     def setUp(self):
-        self.especialidad = Especialidad.objects.create(nombre="Pediatría")
+        self.especialidad = Especialidad.objects.create(nombre="Pediatrí")
 
         self.medico = Medico.objects.create(
             nombre="Laura",
