@@ -53,7 +53,7 @@ class DetalleMedicoViewTest(TestCase):
         
         # Debe dar estatus 200 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "clinica/lista_medicos.html")
+        self.assertTemplateUsed(response, "clinica/detalle_medico.html")
         
         # Validamos que el médico del contexto sea el correcto
         self.assertEqual(response.context["medico"], self.medico)
