@@ -1,7 +1,7 @@
 """Vistas iniciales para navegar médicos y pantalla de inicio."""
 
+from multiprocessing import context
 from pyexpat.errors import messages
-
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, DetailView, UpdateView
 from .models import Medico, Turno, Paciente, Ausencia
 from datetime import date
@@ -10,10 +10,10 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
+from django.shortcuts import get_object_or_404
 from .forms import PacienteForm, TurnoForm
 from django.contrib import messages 
 from django.shortcuts import redirect
-
 
 class HomeView(TemplateView):
     """Vista de inicio. Muestra estadísticas generales y próximos turnos."""
@@ -34,7 +34,6 @@ class HomeView(TemplateView):
         })
         return context
 
-
 class ListaMedicosView(LoginRequiredMixin, ListView):
     """Lista todos los médicos."""
 
@@ -45,9 +44,16 @@ class ListaMedicosView(LoginRequiredMixin, ListView):
 class DetalleMedicoView(LoginRequiredMixin, DetailView):
     """Muestra el detalle de un médico, incluyendo su agenda."""
 
-    template_name = "clinica/detalle_medico.html"
+    template_name = "clinica/lista_medicos.html"
     model = Medico
     context_object_name = "medico"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        medico = context["medico"]
+        context["obras_sociales"] = medico.obras_sociales.all()
+        context["ausencias_cargadas"] = medico.ausencia_set.all()  # si se implementa el modelo de Ausencia
+        return context
 
 class CustomLoginView(LoginView):
     template_name = 'auth/login.html'

@@ -14,6 +14,9 @@ urlpatterns = [
     path("login/", views.CustomLoginView.as_view(), name="login"),
     path("logout/", views.CustomLogoutView.as_view(), name="logout"),
     path("registro/", views.RegistroView.as_view(), name="registro"),
+
+    # Médicos
+    path("medicos/<int:pk>/", views.DetalleMedicoView.as_view(), name="detalle_medico"),
     
     # Protegidas (Requieren perfil de Paciente / Login)
     path('pacientes/registro/', views.RegistroPacienteView.as_view(), name='registro_paciente'),
@@ -25,5 +28,3 @@ urlpatterns = [
     path('turnos/nuevo/', views.NuevoTurnoView.as_view(), name='nuevo_turno'),
     path("turnos/<int:pk>/cancelar/", views.CancelarTurnoView.as_view(), name="cancelar_turno"),
 ]
-    # TODO futuros:
-    # path("medicos/<int:pk>/", views.DetalleMedicoView.as_view(), name="detalle_medico"),
