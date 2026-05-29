@@ -383,13 +383,13 @@ class ObraSocial(models.Model):
         return obra_social, errors
 
     
-    def update(self, name: str, sitioWeb: str, requiereToken: False, medicos_disponibles: list[Medico]):
+    def update(self, name: str, sitioWeb: str, requiereToken: bool, medicos_disponibles: list[Medico]):
         errors = self.__class__.validate(name, sitioWeb, requiereToken, medicos_disponibles)
         if errors:
             return errors
 
         self.name = name.strip()
-        self.sitioWeb = sitioWeb.strip()
+        self.sitioWeb = sitioWeb.strip() if sitioWeb else None
         self.requiereToken = requiereToken
         self.medicos_disponibles.set(medicos_disponibles)
         self.save()
