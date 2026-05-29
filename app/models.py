@@ -248,7 +248,8 @@ class Ausencia(models.Model):
         ordering = ["-fecha_inicio"]
     
     def __str__(self):
-        return f"Ausencia {self.medico.apellido} ({self.fecha_inicio} - {self.fecha_fin})"
+        medico_label = self.medico.apellido if self.medico else "Sin médico"
+        return f"Ausencia {medico_label} ({self.fecha_inicio} - {self.fecha_fin})"
 
     @classmethod
     def validate(cls, medico, motivo, fecha_inicio, fecha_fin, exclude_id=None):

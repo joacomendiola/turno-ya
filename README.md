@@ -163,14 +163,15 @@ turnoya/
 
 ## 🧩 Decisiones de diseño
 
-> *(Mínimo 200 palabras — completar antes de la entrega final)*
+El proyecto fue pensado como una solución simple pero completa para administrar turnos médicos en un entorno de práctica académica. Elegimos este dominio porque permite modelar relaciones reales entre pacientes, médicos, especialidades, ausencias y turnos, y porque obliga a resolver validaciones de negocio que son fáciles de justificar y de probar. Esa combinación lo hace útil para demostrar tanto el uso de Django como el diseño de reglas de negocio.
 
-Describir aquí:
-- Por qué eligieron este dominio
-- Cómo organizaron las responsabilidades entre modelos y vistas
-- Qué validaciones decidieron poner en el modelo vs. en el formulario
-- Cómo dividieron el trabajo entre los integrantes
-- Cualquier decisión de diseño no obvia (ej: por qué usaron FBV en lugar de CBV, cómo manejaron la relación User ↔ Paciente, etc.)
+La separación de responsabilidades se hizo intentando mantener el código legible. Los modelos concentran la lógica de negocio principal: validaciones de datos, creación y actualización de instancias, y reglas como evitar solapamientos de ausencias o turnos duplicados. Las vistas se encargan del flujo web y de la navegación, usando CBV cuando el comportamiento es estándar y simplifica el código. Los formularios quedan para validaciones de interfaz y de experiencia de usuario, como impedir fechas pasadas al pedir un turno.
+
+La decisión de validar en el modelo y no únicamente en el formulario responde a que la integridad de los datos no debe depender de una sola pantalla. Si una regla es importante para el negocio, conviene que también viva en el modelo, así se protege tanto el acceso desde la web como cualquier otro punto de creación de datos. Por eso, por ejemplo, la validación de ausencias y la disponibilidad del médico están en el modelo de turno.
+
+En cuanto a la organización del trabajo, se dividieron las responsabilidades por módulos: infraestructura y autenticación, médicos y disponibilidad, pacientes y turnos, e interfaz y administración. Eso permitió avanzar en paralelo sin pisarse demasiado. También se mantuvo un criterio común en los nombres de commits y en la estructura de templates para que el repositorio quedara más fácil de revisar.
+
+Otra decisión importante fue usar `User` de Django como base de autenticación y vincularlo con `Paciente` mediante una relación uno a uno. Esa solución evita duplicar la lógica de login y aprovecha lo que ya trae Django, mientras que `Paciente` se usa para los datos propios del dominio clínico. Finalmente, se eligió Bootstrap 5 para lograr una interfaz funcional y responsiva sin agregar complejidad extra al frontend.
 
 ---
 
