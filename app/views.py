@@ -1,7 +1,6 @@
 """Vistas iniciales para navegar médicos y pantalla de inicio."""
 
-from multiprocessing import context
-from pyexpat.errors import messages
+ 
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, DetailView, UpdateView
 from .models import Medico, Turno, Paciente, Ausencia
 from datetime import date
@@ -44,7 +43,7 @@ class ListaMedicosView(LoginRequiredMixin, ListView):
 class DetalleMedicoView(LoginRequiredMixin, DetailView):
     """Muestra el detalle de un médico, incluyendo su agenda."""
 
-    template_name = "clinica/lista_medicos.html"
+    template_name = "clinica/detalle_medico.html"
     model = Medico
     context_object_name = "medico"
 

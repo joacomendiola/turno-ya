@@ -14,15 +14,16 @@
         <th>Apellido y nombre</th>
         <th>Matrícula</th>
         <th>Especialidad</th>
-        <!-- TODO: agregar columna de acciones cuando implementen detalle_medico -->
+        <th>Acciones</th>
       </tr>
     </thead>
     <tbody>
       {% for medico in medicos %}
       <tr>
-        <td>{{ medico }}</td>
+        <td><a href="{% url 'app:detalle_medico' medico.pk %}">{{ medico }}</a></td>
         <td><code>{{ medico.matricula }}</code></td>
         <td>{{ medico.especialidad }}</td>
+        <td><a class="btn btn-sm btn-outline-primary" href="{% url 'app:detalle_medico' medico.pk %}">Ver</a></td>
       </tr>
       {% empty %}
       <tr>
