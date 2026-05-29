@@ -1,8 +1,7 @@
 """Vistas iniciales para navegar médicos y pantalla de inicio."""
 
-from multiprocessing import context
-from pyexpat.errors import messages
-from django.views.generic import CreateView, DeleteView, ListView, TemplateView, DetailView, UpdateView
+ 
+from django.views.generic import CreateView, ListView, TemplateView, DetailView, UpdateView
 from .models import Medico, Turno, Paciente, Ausencia
 from datetime import date
 from django.db.models import Count
@@ -10,7 +9,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404
+from django.http import Http404
 from .forms import PacienteForm, TurnoForm
 from django.contrib import messages 
 from django.shortcuts import redirect
@@ -44,7 +43,7 @@ class ListaMedicosView(LoginRequiredMixin, ListView):
 class DetalleMedicoView(LoginRequiredMixin, DetailView):
     """Muestra el detalle de un médico, incluyendo su agenda."""
 
-    template_name = "clinica/lista_medicos.html"
+    template_name = "clinica/detalle_medico.html"
     model = Medico
     context_object_name = "medico"
 
@@ -94,7 +93,10 @@ class PerfilPacienteView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('app:home')
 
     def get_object(self, queryset=None):
-        return self.request.user.paciente
+        paciente = getattr(self.request.user, 'paciente', None)
+        if not paciente:
+            raise Http404("El usuario no tiene perfil de paciente registrado.")
+        return paciente
 
     def form_valid(self, form):
         messages.success(self.request, "Perfil actualizado correctamente.")

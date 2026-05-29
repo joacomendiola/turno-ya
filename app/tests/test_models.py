@@ -88,6 +88,36 @@ class PacienteModelTest(TestCase):
         self.assertEqual(errors, [])
         self.assertIsNotNone(paciente)
 
+    def test_validate_rechaza_dni_vacio(self):
+        errors = Paciente.validate("Juan", "Pérez", None, "juan@gmail.com")
+        self.assertIn("El DNI es obligatorio.", errors)
+
+    def test_update_modifica_datos_correctamente(self):
+        paciente = Paciente.objects.create(
+            nombre="Juan",
+            apellido="Pérez",
+            dni=12345678,
+            email="juan@gmail.com",
+            usuario=self.user,
+        )
+        errors = paciente.update(nombre="Juan", apellido="Gómez", dni=12345678, email="juan@gmail.com")
+        self.assertEqual(errors, [])
+        paciente.refresh_from_db()
+        self.assertEqual(paciente.apellido, "Gómez")
+
+    def test_str_formatea_apellido_nombre_y_dni(self):
+        paciente = Paciente.objects.create(
+            nombre="Juan",
+            apellido="Pérez",
+            dni=12345678,
+            email="juan@gmail.com",
+            usuario=self.user,
+        )
+        texto = str(paciente)
+        self.assertIn("Pérez", texto)
+        self.assertIn("Juan", texto)
+        self.assertIn("12345678", texto)
+
 class TurnoModelTest(TestCase):
     def setUp(self):
         self.especialidad = Especialidad.objects.create(nombre="General")
@@ -100,6 +130,32 @@ class TurnoModelTest(TestCase):
         turno, errors = Turno.new(self.medico, self.paciente, fecha, "Dolor", self.user)
         self.assertEqual(errors, [])
         self.assertEqual(turno.estado, 'pendiente')
+
+    def test_str_incluye_paciente(self):
+        fecha = timezone.now() + timedelta(days=1)
+        turno = Turno.objects.create(
+            medico=self.medico,
+            paciente=self.paciente,
+            fecha_hora=fecha,
+            motivo="Dolor",
+            creado_por=self.user,
+        )
+        self.assertIn("Turno", str(turno))
+        self.assertIn("P, P", str(turno))
+
+    def test_update_modifica_estado(self):
+        fecha = timezone.now() + timedelta(days=1)
+        turno = Turno.objects.create(
+            medico=self.medico,
+            paciente=self.paciente,
+            fecha_hora=fecha,
+            motivo="Dolor",
+            creado_por=self.user,
+        )
+        errors = turno.update(estado="confirmado")
+        self.assertEqual(errors, [])
+        turno.refresh_from_db()
+        self.assertEqual(turno.estado, "confirmado")
 
     def test_turno_duplicado_falla(self):
         """Tarea 3.4: Validar que no existan dos turnos para el mismo médico a la misma hora"""
@@ -292,6 +348,16 @@ class EspecialidadModelTest(TestCase):
         errors = especialidad.update(descripcion="Especialistas en huesos")
         self.assertEqual(len(errors), 0)
         self.assertEqual(especialidad.descripcion, "Especialistas en huesos")
+
+    def test_manager_con_medicos_activos_retorna_solo_especialidades_con_medicos(self):
+        especialidad_con_medico = Especialidad.objects.create(nombre="Clínica")
+        especialidad_sin_medico = Especialidad.objects.create(nombre="Dermatología")
+        Medico.objects.create(nombre="Ana", apellido="Lopez", matricula="M-100", especialidad=especialidad_con_medico)
+
+        resultados = Especialidad.objects.con_medicos_activos()
+
+        self.assertIn(especialidad_con_medico, resultados)
+        self.assertNotIn(especialidad_sin_medico, resultados)
 
 class AuthViewCBVTest(TestCase):
     """Pruebas para la vista de autenticación basada en clases."""

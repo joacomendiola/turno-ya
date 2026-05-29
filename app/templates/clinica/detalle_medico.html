@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle del médico{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-body">
+    <h3 class="card-title">{{ medico.nombre }} {{ medico.apellido }}</h3>
+    <p class="mb-1"><strong>Especialidad:</strong> {{ medico.especialidad.nombre }}</p>
+    <p class="mb-1"><strong>Matrícula:</strong> <code>{{ medico.matricula }}</code></p>
+
+    <h5 class="mt-3">Obras sociales</h5>
+    {% if obras_sociales %}
+      <ul>
+      {% for obra in obras_sociales %}
+        <li>{{ obra.name }}</li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">Sin obras sociales cargadas.</p>
+    {% endif %}
+
+    <h5 class="mt-3">Ausencias</h5>
+    {% if ausencias_cargadas %}
+      <ul>
+      {% for a in ausencias_cargadas %}
+        <li>{{ a.fecha_inicio }} — {{ a.fecha_fin }}: {{ a.motivo }}</li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">No hay ausencias registradas.</p>
+    {% endif %}
+
+    <a href="{% url 'app:lista_medicos' %}" class="btn btn-secondary mt-3">Volver a la lista</a>
+  </div>
+</div>
+{% endblock %}
