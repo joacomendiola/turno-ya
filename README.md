@@ -175,6 +175,78 @@ Otra decisión importante fue usar `User` de Django como base de autenticación 
 
 ---
 
+## 🗺️ Plan operativo de ejecución
+
+### 1) Orden y dependencias (bloqueantes)
+1. Modelos base + constraints: `User/Especialidad`, `ObraSocial/Médico`, `Paciente`, `Turno`, `Ausencia`.
+2. Auth y permisos: login/logout/registro + roles funcionales.
+3. Vistas backend: listado por rol, detalle médico, alta/cancelación/aceptación de turnos.
+4. Consultas ORM avanzadas (`app/consultas.py`) para estadísticas y filtros.
+5. UI/UX: home, navbar dinámica, formularios Bootstrap y tabla con filtro.
+6. Opcionales: `FranjaHoraria`, reprogramación automática y recordatorios/historial (solo si lo obligatorio está cerrado).
+
+### 2) Contratos obligatorios del equipo
+- Estados de turno: `PENDIENTE`, `ACEPTADO`, `CANCELADO`.
+- Roles y permisos funcionales: `PACIENTE`, `MEDICO`, `ADMIN`.
+- Campos clave acordados: matrícula única (médico), DNI único (paciente), relación médico-especialidad, ausencias por rango fecha/hora.
+- Rutas estándar: auth, médicos, pacientes, turnos y ausencias con naming consistente.
+- Vistas con formato estable: mensajes de éxito/error + redirecciones esperadas.
+
+### 3) Criterio de “Done” por tarea
+- Modelo con validaciones + constraint real en DB.
+- Vista protegida por permisos correctos.
+- Caso feliz + caso inválido cubiertos.
+- UI renderizada sin romper navegación.
+- Commit con convención uniforme y mensaje claro.
+
+### 4) Plan semanal de ejecución
+#### Semana 1 (base técnica)
+- Cerrar modelos obligatorios y migraciones.
+- Cerrar auth/permisos.
+- Definir y congelar contratos (estados, roles, rutas).
+
+#### Semana 2 (flujo funcional)
+- Implementar turnos completos: crear, listar por rol, aceptar, cancelar.
+- Implementar detalle médico + ausencias.
+- Integrar consultas ORM para home y filtros.
+
+#### Semana 3 (UI + integración)
+- Terminar home/navbar/formularios/tabla con filtro.
+- Ejecutar pruebas de flujo manuales y automáticas mínimas.
+- Ajustar hardening de permisos y detalles finales.
+
+#### Semana 4 (buffer/opcionales)
+- Implementar opcionales solo si lo obligatorio está estable.
+- Cierre técnico y actualización final de documentación.
+
+### 5) Plan de integración
+- Integración diaria a rama común del equipo.
+- Responsable rotativo diario para resolución de conflictos.
+- Regla: no mergear sin pruebas mínimas verdes del módulo tocado.
+- Freeze 24h antes de entrega: solo bugfix.
+
+### 6) Testing mínimo por módulo
+- Modelos: validaciones y constraints.
+- Vistas: acceso permitido/denegado por rol.
+- Flujos: crear turno, aceptar (médico), cancelar (paciente), ausencia.
+- Consultas: estadísticas de home y filtro por especialidad.
+
+### 7) Convención de commits
+- `feat(modelos): ...`
+- `feat(auth): ...`
+- `feat(vistas): ...`
+- `feat(ui): ...`
+- `test(...): ...`
+- `fix(...): ...`
+
+### 8) Matriz mínima de seguridad/permisos
+- Paciente: ver/editar perfil propio, crear/cancelar turnos propios, ver listado propio.
+- Médico: ver sus turnos, aceptar/rechazar, gestionar ausencias propias.
+- Admin: gestión global de catálogos, métricas y supervisión.
+- Regla transversal: ningún usuario accede o edita recursos ajenos fuera de su rol.
+
+---
+
 ## ⭐ Funcionalidades opcionales implementadas
 
 - [ ] Vista "Mis turnos" para el paciente autenticado
