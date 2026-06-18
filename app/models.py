@@ -217,15 +217,25 @@ class Turno(models.Model):
         return errors
 
     @classmethod
+    @classmethod
     def new(cls, medico, paciente, fecha_hora, motivo, usuario):
         errors = cls.validate(medico, fecha_hora)
         if errors:
             return None, errors
         
-        turno = cls.objects.create(
-            medico=medico, paciente=paciente, fecha_hora=fecha_hora, motivo=motivo, creado_por=usuario
-        )
-        return turno, []
+        # Atrapamos fallos directos de unicidad de la BD para transformarlos en errores limpios
+        from django.db import IntegrityError
+        try:
+            turno = cls.objects.create(
+                medico=medico, 
+                paciente=paciente, 
+                fecha_hora=fecha_hora, 
+                motivo=motivo, 
+                creado_por=usuario
+            )
+            return turno, []
+        except IntegrityError:
+            return None, ["El médico ya tiene un turno asignado en ese horario."]
 
     def update(self, **kwargs):
         medico = kwargs.get('medico', self.medico)
@@ -329,9 +339,7 @@ class Ausencia(models.Model):
         self.fecha_fin = fecha_fin
         self.save()
         return []
-# ==========================================
-# Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
-# ==========================================
+
 class ObraSocial(models.Model): 
     name=models.CharField(max_length=100, unique=True, default="Nombre default")
     sitioWeb=models.URLField(blank=True, unique=True, null=True)
