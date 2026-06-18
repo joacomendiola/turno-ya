@@ -481,4 +481,20 @@ class ObraSocialSeparatedConstraintsTest(TestCase):
         with self.assertRaises(IntegrityError):
             obra2 = ObraSocial.objects.create(name="PAMI", sitioWeb="https://osde.com.ar")
             obra2.medicos_disponibles.set([self.medico])
-# TODO: agregar tests para Paciente y Turno cuando los implementen
+
+class RecordatorioModelTest(TestCase):
+
+    def setUp(self):
+
+        self.esp = Especialidad.objects.create(nombre="Oftalmología")
+        self.medico = Medico.objects.create(nombre="Hugo", apellido="Paz", matricula="111", especialidad=self.esp)
+        self.user = User.objects.create_user(username="pacientex")
+        self.paciente = Paciente.objects.create(nombre="Ana", apellido="Luz", dni=444, email="a@a.com", usuario=self.user)
+        self.turno = Turno.objects.create(medico=self.medico, paciente=self.paciente, motivo="Chequeo", creado_por=self.user)
+
+    def test_creacion_recordatorio(self):
+        
+        from app.models import Recordatorio
+        recordatorio = Recordatorio.objects.create(turno=self.turno, mensaje="Traer estudios previos")
+        self.assertIn("Recordatorio", str(recordatorio))
+        self.assertEqual(recordatorio.turno, self.turno)
