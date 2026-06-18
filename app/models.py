@@ -15,6 +15,9 @@ class Medico(models.Model):
     apellido = models.CharField(max_length=100)
     matricula = models.CharField(max_length=20, unique=True)
     especialidad = models.ForeignKey("Especialidad", on_delete=models.PROTECT, related_name="medico")
+    
+    #Agrego relación con usuario
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name="medico")
 
     class Meta:
         ordering = ["apellido", "nombre"]
