@@ -165,3 +165,23 @@ class ListaTurnosView(LoginRequiredMixin, ListView):
         if hasattr(self.request.user, 'paciente'):
             return Turno.objects.filter(paciente=self.request.user.paciente)
         return Turno.objects.none()
+    
+class AceptarTurnoView(LoginRequiredMixin, UpdateView):
+    model = Turno
+    template_name = 'clinica/aceptar_turno.html'
+    fields = []
+    success_url = reverse_lazy('app:lista_turnos')
+
+    def form_valid(self, form):
+        turno = self.get_object()
+        
+        # Ejecutamos el método update del modelo para mutar el estado
+        errors = turno.update(estado='confirmado')
+        
+        if not errors:
+            messages.success(self.request, "El turno ha sido confirmado exitosamente.")
+            return redirect(self.success_url)
+        else:
+            for error in errors:
+                messages.error(self.request, error)
+            return self.form_invalid(form)
