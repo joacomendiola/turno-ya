@@ -217,7 +217,6 @@ class Turno(models.Model):
         return errors
 
     @classmethod
-    @classmethod
     def new(cls, medico, paciente, fecha_hora, motivo, usuario):
         errors = cls.validate(medico, fecha_hora)
         if errors:
@@ -253,9 +252,9 @@ class Ausencia(models.Model):
     """Representa una ausencia o licencia de un médico."""
 
     medico = models.ForeignKey(Medico, on_delete=models.CASCADE, null=True, blank=True)
-    motivo = models.CharField(max_length=200, null=True, blank=True)                        #Agrego nulos para poder hacer la migración sin problemas
-    fecha_inicio = models.DateField(default=date.today)
-    fecha_fin = models.DateField(default=date.today)
+    motivo = models.CharField(max_length=200, null=True, blank=True)
+    fecha_inicio = models.DateField(default=date.today)  # Llama a date.today() cada vez
+    fecha_fin = models.DateField(default=date.today)     # Llama a date.today() cada vez
     
     class Meta:
         ordering = ["-fecha_inicio"]
