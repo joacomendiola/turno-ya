@@ -2,7 +2,7 @@
 
  
 from django.views.generic import CreateView, ListView, TemplateView, DetailView, UpdateView
-from .models import Medico, Turno, Paciente, Ausencia
+from .models import Medico, Turno, Paciente, Ausencia, Especialidad
 from datetime import date
 from django.db.models import Count
 from django.contrib.auth.views import LoginView, LogoutView
@@ -40,6 +40,20 @@ class ListaMedicosView(LoginRequiredMixin, ListView):
     model = Medico
     template_name = "clinica/lista_medicos.html"
     context_object_name = "medicos"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        especialidad_id = self.request.GET.get('especialidad')
+        # Si vino el parametro en la URL y no esta vacio, filtramos
+        if especialidad_id:
+            queryset = queryset.filter(especialidad_id=especialidad_id)
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Enviamos todas las especialidades disponibles para renderizar el <select>
+        context["especialidades"] = Especialidad.objects.all()
+        return context
 
 class DetalleMedicoView(LoginRequiredMixin, DetailView):
     """Muestra el detalle de un médico, incluyendo su agenda."""
@@ -144,6 +158,12 @@ class CancelarTurnoView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         turno = self.get_object()
+        
+        # Validar que el usuario tenga perfil de paciente antes de acceder
+        if not hasattr(self.request.user, 'paciente'):
+            messages.error(self.request, "Debes tener un perfil de paciente para cancelar un turno.")
+            return redirect(self.success_url)
+        
         if turno.paciente != self.request.user.paciente:
             messages.error(self.request, "No tienes permiso para cancelar este turno.")
             return redirect(self.success_url)
