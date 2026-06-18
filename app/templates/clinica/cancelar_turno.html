@@ -1,23 +1,21 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="card border-danger mx-auto" style="max-width: 500px;">
-        <div class="card-header bg-danger text-white">
-            <h4 class="mb-0">Cancelar Turno</h4>
-        </div>
-        <div class="card-body text-center">
-            <p class="lead">¿Estás seguro que deseas cancelar tu turno con el <strong>{{ turno.medico }}</strong>?</p>
-            <p>Fecha y hora: {{ turno.fecha_hora|date:"d/m/Y H:i" }}</p>
-            
-            <form method="post">
-                {% csrf_token %}
-                <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
-                    <a href="{% url 'app:lista_turnos' %}" class="btn btn-secondary">Volver</a>
-                    <button type="submit" class="btn btn-danger">Sí, cancelar turno</button>
-                </div>
-            </form>
-        </div>
+<div class="card border-danger mx-auto" style="max-width: 500px;">
+    <div class="card-header bg-danger text-white">
+        <h4 class="mb-0">Cancelar Turno</h4>
+    </div>
+    <div class="card-body text-center">
+        <p class="lead">¿Estás seguro que deseas cancelar tu turno con el <strong>{{ turno.medico }}</strong>?</p>
+        <p>Fecha y hora: {{ turno.fecha_hora|date:"d/m/Y H:i" }}</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                <a href="{% url 'app:lista_turnos' %}" class="btn btn-secondary">Volver</a>
+                <button type="submit" class="btn btn-danger">Sí, cancelar turno</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
