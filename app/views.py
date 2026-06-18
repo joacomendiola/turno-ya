@@ -13,6 +13,7 @@ from django.http import Http404
 from .forms import PacienteForm, TurnoForm
 from django.contrib import messages 
 from django.shortcuts import redirect
+from django.core.exceptions import PermissionDenied
 
 class HomeView(TemplateView):
     """Vista de inicio. Muestra estadísticas generales y próximos turnos."""
@@ -162,8 +163,11 @@ class ListaTurnosView(LoginRequiredMixin, ListView):
     context_object_name = 'turnos'
     
     def get_queryset(self):
-        if hasattr(self.request.user, 'paciente'):
-            return Turno.objects.filter(paciente=self.request.user.paciente)
+        user = self.request.user
+        if hasattr(user, 'paciente'):
+            return Turno.objects.filter(paciente=user.paciente)
+        elif hasattr(user, 'medico'):
+            return Turno.objects.filter(medico=user.medico)
         return Turno.objects.none()
     
 class AceptarTurnoView(LoginRequiredMixin, UpdateView):
@@ -172,16 +176,34 @@ class AceptarTurnoView(LoginRequiredMixin, UpdateView):
     fields = []
     success_url = reverse_lazy('app:lista_turnos')
 
+    def get_queryset(self):
+        #Restringe los turnos únicamente al paciente logueado.
+        user = self.request.user
+        if hasattr(user, 'paciente'):
+            return Turno.objects.filter(paciente=user.paciente)
+        # Si no es paciente (ej: es médico o admin), no ve ningún turno en esta vista
+        return Turno.objects.none()
+
     def form_valid(self, form):
+        # 1. Validar que el usuario tenga perfil de paciente
+        if not hasattr(self.request.user, 'paciente'):
+            raise PermissionDenied("Solo los pacientes pueden aceptar turnos.")
+
         turno = self.get_object()
-        
-        # Ejecutamos el método update del modelo para mutar el estado
-        errors = turno.update(estado='confirmado')
-        
-        if not errors:
-            messages.success(self.request, "El turno ha sido confirmado exitosamente.")
+
+        # 2. Validar que el turno pertenezca a request.user.paciente 
+        # (Ya lo cubre el get_queryset, pero lo reforzamos acá por seguridad)
+        if turno.paciente != self.request.user.paciente:
+            raise PermissionDenied("Este turno no te pertenece.")
+
+        # 3. Validar que solo se pueda aceptar si turno.estado == "pendiente"
+        if turno.estado != 'pendiente':
+            messages.error(self.request, "Este turno ya no está pendiente.")
             return redirect(self.success_url)
-        else:
-            for error in errors:
-                messages.error(self.request, error)
-            return self.form_invalid(form)
+
+        # Si pasa todas las validaciones, mutamos el estado y guardamos
+        turno.estado = 'confirmado'
+        turno.save()
+
+        messages.success(self.request, "El turno ha sido confirmado exitosamente.")
+        return redirect(self.success_url)
