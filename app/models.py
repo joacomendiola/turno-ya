@@ -253,8 +253,8 @@ class Ausencia(models.Model):
 
     medico = models.ForeignKey(Medico, on_delete=models.CASCADE, null=True, blank=True)
     motivo = models.CharField(max_length=200, null=True, blank=True)
-    fecha_inicio = models.DateField(default=date.today)  # Llama a date.today() cada vez
-    fecha_fin = models.DateField(default=date.today)     # Llama a date.today() cada vez
+    fecha_inicio = models.DateField(default=date.today)  
+    fecha_fin = models.DateField(default=date.today)     
     
     class Meta:
         ordering = ["-fecha_inicio"]
