@@ -32,6 +32,10 @@
                         {% endif %}
                     </td>
                     <td>
+                        {% if turno.estado == 'pendiente' %}
+                            <a href="{% url 'app:aceptar_turno' turno.id %}" class="btn btn-sm btn-outline-success">Confirmar</a>
+                        {% endif %}
+
                         {% if turno.estado != 'cancelado' %}
                             <a href="{% url 'app:cancelar_turno' turno.id %}" class="btn btn-sm btn-outline-danger">Cancelar</a>
                         {% else %}

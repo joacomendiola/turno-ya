@@ -15,6 +15,9 @@ class Medico(models.Model):
     apellido = models.CharField(max_length=100)
     matricula = models.CharField(max_length=20, unique=True)
     especialidad = models.ForeignKey("Especialidad", on_delete=models.PROTECT, related_name="medico")
+    
+    #Agrego relación con usuario
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name="medico")
 
     class Meta:
         ordering = ["apellido", "nombre"]
@@ -214,15 +217,25 @@ class Turno(models.Model):
         return errors
 
     @classmethod
+    @classmethod
     def new(cls, medico, paciente, fecha_hora, motivo, usuario):
         errors = cls.validate(medico, fecha_hora)
         if errors:
             return None, errors
         
-        turno = cls.objects.create(
-            medico=medico, paciente=paciente, fecha_hora=fecha_hora, motivo=motivo, creado_por=usuario
-        )
-        return turno, []
+        # Atrapamos fallos directos de unicidad de la BD para transformarlos en errores limpios
+        from django.db import IntegrityError
+        try:
+            turno = cls.objects.create(
+                medico=medico, 
+                paciente=paciente, 
+                fecha_hora=fecha_hora, 
+                motivo=motivo, 
+                creado_por=usuario
+            )
+            return turno, []
+        except IntegrityError:
+            return None, ["El médico ya tiene un turno asignado en ese horario."]
 
     def update(self, **kwargs):
         medico = kwargs.get('medico', self.medico)
@@ -326,9 +339,7 @@ class Ausencia(models.Model):
         self.fecha_fin = fecha_fin
         self.save()
         return []
-# ==========================================
-# Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
-# ==========================================
+
 class ObraSocial(models.Model): 
     name=models.CharField(max_length=100, unique=True, default="Nombre default")
     sitioWeb=models.URLField(blank=True, unique=True, null=True)
@@ -394,8 +405,16 @@ class ObraSocial(models.Model):
         self.medicos_disponibles.set(medicos_disponibles)
         self.save()
         return errors
-    
-# ==========================================
-# Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
-# ==========================================
-# class Especialidad(models.Model): ...  ← extraer especialidad a FK
+
+
+class Recordatorio(models.Model):
+    """Representa un recordatorio asociado a un turno específico."""
+    turno = models.ForeignKey(Turno, on_delete=models.CASCADE, related_name="recordatorios")
+    mensaje = models.TextField()
+    fecha = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-fecha"]
+
+    def __str__(self):
+        return f"Recordatorio: {self.turno} - {self.fecha.strftime('%d/%m/%Y')}"

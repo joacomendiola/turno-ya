@@ -481,4 +481,105 @@ class ObraSocialSeparatedConstraintsTest(TestCase):
         with self.assertRaises(IntegrityError):
             obra2 = ObraSocial.objects.create(name="PAMI", sitioWeb="https://osde.com.ar")
             obra2.medicos_disponibles.set([self.medico])
-# TODO: agregar tests para Paciente y Turno cuando los implementen
+
+class RecordatorioModelTest(TestCase):
+
+    def setUp(self):
+
+        self.esp = Especialidad.objects.create(nombre="Oftalmología")
+        self.medico = Medico.objects.create(nombre="Hugo", apellido="Paz", matricula="111", especialidad=self.esp)
+        self.user = User.objects.create_user(username="pacientex")
+        self.paciente = Paciente.objects.create(nombre="Ana", apellido="Luz", dni=444, email="a@a.com", usuario=self.user)
+        self.turno = Turno.objects.create(medico=self.medico, paciente=self.paciente, motivo="Chequeo", creado_por=self.user)
+
+    def test_creacion_recordatorio(self):
+        
+        from app.models import Recordatorio
+        recordatorio = Recordatorio.objects.create(turno=self.turno, mensaje="Traer estudios previos")
+        self.assertIn("Recordatorio", str(recordatorio))
+        self.assertEqual(recordatorio.turno, self.turno)
+
+class AceptarTurnoViewSecurityTests(TestCase):
+
+    def setUp(self):
+        # 1. Configuramos una especialidad y médico totalmente distintos
+        self.esp = Especialidad.objects.create(nombre="Dermatología")
+        self.medico = Medico.objects.create(
+            nombre="Esteban", 
+            apellido="Quito", 
+            matricula="MP-8841", 
+            especialidad=self.esp
+        )
+
+        # 2. Crear Paciente 1 (Mariela - Dueña legítima del turno)
+        self.user_mariela = User.objects.create_user(username='mariela', password='456')
+        self.paciente_mariela = Paciente.objects.create(
+            nombre="Mariela", 
+            apellido="Benítez", 
+            dni=33444555, 
+            email="mariela@correo.com", 
+            usuario=self.user_mariela
+        )
+
+        # 3. Crear Paciente 2 (Gastón - El usuario intruso)
+        self.user_gaston = User.objects.create_user(username='gaston', password='456')
+        self.paciente_gaston = Paciente.objects.create(
+            nombre="Gastón", 
+            apellido="Herrera", 
+            dni=22555888, 
+            email="gaston@correo.com", 
+            usuario=self.user_gaston
+        )
+
+        # 4. Crear un usuario administrativo/sistema sin perfil de paciente asignado
+        self.user_admin_test = User.objects.create_user(username='admin_test', password='456')
+
+        # 5. Definimos los turnos de prueba asociados a Mariela
+        self.fecha = timezone.now() + timedelta(days=3)
+        
+        self.turno_pendiente = Turno.objects.create(
+            medico=self.medico,
+            paciente=self.paciente_mariela,
+            fecha_hora=self.fecha,
+            motivo="Revisión de lunares",
+            creado_por=self.user_mariela,
+            estado='pendiente'
+        )
+
+        self.turno_ya_confirmado = Turno.objects.create(
+            medico=self.medico,
+            paciente=self.paciente_mariela,
+            fecha_hora=self.fecha,
+            motivo="Tratamiento cutáneo",
+            creado_por=self.user_mariela,
+            estado='confirmado'
+        )
+
+    def test_usuario_intentando_aceptar_turno_ajeno(self):
+        """Valida que Gastón no pueda meterse a confirmar el turno de Mariela"""
+        self.client.login(username='gaston', password='456')
+        url = reverse('app:aceptar_turno', kwargs={'pk': self.turno_pendiente.pk})
+        
+        response = self.client.post(url)
+        # El get_queryset los filtra, por ende debe retornar 404 Not Found
+        self.assertEqual(response.status_code, 404)
+
+    def test_aceptar_turno_que_no_esta_pendiente(self):
+        """Valida que Mariela no pueda volver a aceptar un turno ya confirmado"""
+        self.client.login(username='mariela', password='456')
+        url = reverse('app:aceptar_turno', kwargs={'pk': self.turno_ya_confirmado.pk})
+        
+        response = self.client.post(url)
+        self.assertRedirects(response, reverse('app:lista_turnos'))
+        
+        # Corroboramos que mantenga su estado original en BD
+        self.turno_ya_confirmado.refresh_from_db()
+        self.assertEqual(self.turno_ya_confirmado.estado, 'confirmado')
+
+    def test_usuario_sin_perfil_paciente_es_rechazado(self):
+        """Valida que un usuario sin vincular a Paciente rebote directamente"""
+        self.client.login(username='admin_test', password='456')
+        url = reverse('app:aceptar_turno', kwargs={'pk': self.turno_pendiente.pk})
+        
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 404)

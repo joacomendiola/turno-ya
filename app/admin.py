@@ -1,7 +1,7 @@
 """Configuración básica del admin para los modelos de la app."""
 
 from django.contrib import admin
-from .models import Medico, Especialidad, Paciente, Turno
+from .models import Medico, Especialidad, Paciente, Turno, Recordatorio
 
 @admin.register(Especialidad)
 class EspecialidadAdmin(admin.ModelAdmin):
@@ -30,3 +30,12 @@ class TurnoAdmin(admin.ModelAdmin):
     search_fields = ("paciente__apellido", "medico__apellido")
     date_hierarchy = "fecha_hora"
 
+@admin.register(Recordatorio)
+class RecordatorioAdmin(admin.ModelAdmin):
+    list_display = ("turno", "fecha", "mensaje_corto")
+    list_filter = ("fecha",)
+    search_fields = ("turno__paciente__apellido", "mensaje")
+
+    def mensaje_corto(self, obj):
+        return obj.mensaje[:50] + "..." if len(obj.mensaje) > 50 else obj.mensaje
+    mensaje_corto.short_description = "Mensaje"
