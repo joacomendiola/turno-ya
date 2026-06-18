@@ -549,7 +549,7 @@ class AceptarTurnoViewSecurityTests(TestCase):
         self.turno_ya_confirmado = Turno.objects.create(
             medico=self.medico,
             paciente=self.paciente_mariela,
-            fecha_hora=self.fecha,
+            fecha_hora=self.fecha + timedelta(days=2),
             motivo="Tratamiento cutáneo",
             creado_por=self.user_mariela,
             estado='confirmado'
