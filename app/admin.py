@@ -1,7 +1,6 @@
 """Configuración básica del admin para los modelos de la app."""
 
 from django.contrib import admin
-from .models import Medico, Especialidad, Paciente, Turno
 from .models import Medico, Especialidad, Paciente, Turno, Recordatorio
 
 @admin.register(Especialidad)
