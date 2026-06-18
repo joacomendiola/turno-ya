@@ -397,8 +397,16 @@ class ObraSocial(models.Model):
         self.medicos_disponibles.set(medicos_disponibles)
         self.save()
         return errors
-    
-# ==========================================
-# Para que el grupo importe sin errores, creamos vacios hasta que se implementen los modelos faltantes.
-# ==========================================
-# class Especialidad(models.Model): ...  ← extraer especialidad a FK
+
+
+class Recordatorio(models.Model):
+    """Representa un recordatorio asociado a un turno específico."""
+    turno = models.ForeignKey(Turno, on_delete=models.CASCADE, related_name="recordatorios")
+    mensaje = models.TextField()
+    fecha = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-fecha"]
+
+    def __str__(self):
+        return f"Recordatorio: {self.turno} - {self.fecha.strftime('%d/%m/%Y')}"
