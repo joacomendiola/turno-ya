@@ -1,56 +1,68 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Mis Turnos</h2>
-    <hr>
-    
-    {% if turnos %}
-        <table class="table table-striped table-hover mt-3">
-            <thead class="table-dark">
-                <tr>
-                    <th>Fecha y Hora</th>
-                    <th>Médico</th>
-                    <th>Motivo</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for turno in turnos %}
-                <tr>
-                    <td>{{ turno.fecha_hora|date:"d/m/Y H:i" }}</td>
-                    <td>{{ turno.medico }}</td>
-                    <td>{{ turno.motivo }}</td>
-                    <td>
-                        {% if turno.estado == 'pendiente' %}
-                            <span class="badge bg-warning text-dark">Pendiente</span>
-                        {% elif turno.estado == 'confirmado' %}
-                            <span class="badge bg-success">Confirmado</span>
-                        {% else %}
-                            <span class="badge bg-danger">Cancelado</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if turno.estado == 'pendiente' %}
-                            <a href="{% url 'app:aceptar_turno' turno.id %}" class="btn btn-sm btn-outline-success">Confirmar</a>
-                        {% endif %}
-
-                        {% if turno.estado != 'cancelado' %}
-                            <a href="{% url 'app:cancelar_turno' turno.id %}" class="btn btn-sm btn-outline-danger">Cancelar</a>
-                        {% else %}
-                            <span class="text-muted">-</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <div class="alert alert-info">
-            No tienes turnos registrados actualmente. 
-            <a href="{% url 'app:nuevo_turno' %}" class="alert-link">Solicitar un turno aquí</a>.
-        </div>
-    {% endif %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h4">Mis Turnos</h2>
 </div>
+
+{% if turnos %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Fecha y Hora</th>
+        <th>Médico</th>
+        <th>Motivo</th>
+        {% if not hasattr_paciente_stub %} 
+          <th>Observaciones Médicas</th>
+        {% endif %}
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for turno in turnos %}
+      <tr>
+        <td>{{ turno.fecha_hora|date:"d/m/Y H:i" }}</td>
+        <td>{{ turno.medico }}</td>
+        <td>{{ turno.motivo }}</td>
+        {% if not hasattr_paciente_stub %}
+        <td>
+          <form method="post" action="#" class="d-flex gap-2">
+            {% csrf_token %}
+            <textarea name="observaciones" class="form-control form-control-sm" rows="1" placeholder="Evolución clínica..."></textarea>
+            <button type="submit" class="btn btn-sm btn-success">Guardar</button>
+          </form>
+        </td>
+        {% endif %}
+        <td>
+          {% if turno.estado == 'pendiente' %}
+            <span class="badge bg-warning text-dark">Pendiente</span>
+          {% elif turno.estado == 'confirmado' %}
+            <span class="badge bg-success">Confirmado</span>
+          {% else %}
+            <span class="badge bg-danger">Cancelado</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if turno.estado == 'pendiente' %}
+            <a href="{% url 'app:aceptar_turno' turno.id %}" class="btn btn-sm btn-outline-success">Confirmar</a>
+          {% endif %}
+          {% if turno.estado != 'cancelado' %}
+            <a href="{% url 'app:cancelar_turno' turno.id %}" class="btn btn-sm btn-outline-danger">Cancelar</a>
+          {% else %}
+            <span class="text-muted">-</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-info">
+    No tienes turnos registrados actualmente. 
+    <a href="{% url 'app:nuevo_turno' %}" class="alert-link">Solicitar un turno aquí</a>.
+</div>
+{% endif %}
 {% endblock %}
