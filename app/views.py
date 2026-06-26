@@ -85,17 +85,30 @@ class RegistroView(CreateView):
     form_class = UserCreationForm
     template_name = 'auth/registro.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            messages.info(request, "Ya estás registrado y logueado.")
+            return redirect('app:home')
+        return super().dispatch(request, *args, **kwargs)
+    
     def form_valid(self, form):
         user=form.save()
         login(self.request, user)
         messages.success(self.request, "¡Registro exitoso! Ahora puedes iniciar sesión.")
         return redirect('app:registro_paciente')
-
+    
 # Vistas de Gestión de Pacientes y Perfil
 class RegistroPacienteView(LoginRequiredMixin, CreateView):
     template_name = 'clinica/registro_paciente.html'
     form_class = PacienteForm
     success_url = reverse_lazy('app:home')
+
+    def dispatch(self, request, *args, **kwargs):
+        # Si el usuario ya tiene un perfil de paciente, lo redirigimos a su perfil
+        if hasattr(request.user, 'paciente'):
+            messages.info(request, "Ya tienes un perfil de paciente registrado.")
+            return redirect('app:home')
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         form.instance.usuario = self.request.user
