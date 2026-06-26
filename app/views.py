@@ -2,7 +2,7 @@
 
  
 from django.views.generic import CreateView, ListView, TemplateView, DetailView, UpdateView
-from .models import Medico, Turno, Paciente, Ausencia, Especialidad
+from app.models import Medico, Turno, Paciente, Ausencia, Especialidad, ObraSocial, Recordatorio
 from datetime import date
 from django.db.models import Count
 from django.contrib.auth.views import LoginView, LogoutView

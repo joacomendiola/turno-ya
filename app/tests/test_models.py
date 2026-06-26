@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse
-from app.models import Medico, Paciente, Turno, Especialidad, Ausencia, ObraSocial
+from app.models import Especialidad, Medico, Paciente, Turno, Ausencia, ObraSocial
 from django.db import IntegrityError
 from datetime import date, timedelta
 
@@ -44,6 +44,7 @@ class MedicoModelTest(TestCase):
         # NUEVO: Comprueba que el método rechace un string en lugar de un objeto Especialidad
         errors = Medico.validate("Ana", "García", "MP-0001", "Cardiología String")
         self.assertTrue(len(errors) > 0)
+        self.assertIn("La especialidad es obligatoria.", errors)
 
     # --- new ---
 
