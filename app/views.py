@@ -14,6 +14,7 @@ from .forms import PacienteForm, TurnoForm
 from django.contrib import messages 
 from django.shortcuts import redirect
 from django.core.exceptions import PermissionDenied
+from django.contrib.auth import login
 
 class HomeView(TemplateView):
     """Vista de inicio. Muestra estadísticas generales y próximos turnos."""
@@ -83,11 +84,12 @@ class CustomLogoutView(LogoutView):
 class RegistroView(CreateView):
     form_class = UserCreationForm
     template_name = 'auth/registro.html'
-    success_url = reverse_lazy('app:login')
 
     def form_valid(self, form):
+        user=form.save()
+        login(self.request, user)
         messages.success(self.request, "¡Registro exitoso! Ahora puedes iniciar sesión.")
-        return super().form_valid(form)
+        return redirect('app:registro_paciente')
 
 # Vistas de Gestión de Pacientes y Perfil
 class RegistroPacienteView(LoginRequiredMixin, CreateView):
