@@ -16,7 +16,7 @@ from django.shortcuts import redirect
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import login
 
-class HomeView(TemplateView):
+class HomeView(LoginRequiredMixin, TemplateView):
     """Vista de inicio. Muestra estadísticas generales y próximos turnos."""
 
     template_name = "clinica/home.html"
