@@ -20,7 +20,7 @@ urlpatterns = [
     
     # Protegidas (Requieren perfil de Paciente / Login)
     path('pacientes/registro/', views.RegistroPacienteView.as_view(), name='registro_paciente'),
-    path('pacientes/perfil/', views.PerfilPacienteView.as_view(), name='perfil_paciente'), #3.3
+    path('pacientes/perfil/', views.PerfilPacienteView.as_view(), name='perfil_paciente'), 
     path('pacientes/', views.ListaPacientesView.as_view(), name='lista_pacientes'),
     
     # Turnos
