@@ -1,5 +1,7 @@
 
 # 3. Paciente
+from email import errors
+
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -25,6 +27,8 @@ class Paciente(models.Model):
         errors = []
         if not dni:
             errors.append("El DNI es obligatorio.")
+        elif len(str(dni)) < 7 or len(str(dni)) > 8:
+            errors.append("El DNI debe tener entre 7 y 8 dígitos.")
         return errors
 
     @classmethod
