@@ -112,6 +112,8 @@ class HomeViewTest(TestCase):
             fecha_inicio=date.today(),
             fecha_fin=date.today(),
         )
+        # Loguear el cliente de pruebas para acceder a HomeView (requiere login)
+        self.client.login(username="testuser", password="testpass")
 
     def test_home_loads_successfully(self):
         response = self.client.get(reverse("app:home"))

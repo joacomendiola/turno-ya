@@ -2,7 +2,7 @@
 
  
 from django.views.generic import CreateView, ListView, TemplateView, DetailView, UpdateView
-from .models import Medico, Turno, Paciente, Ausencia, Especialidad
+from app.models import Medico, Turno, Paciente, Ausencia, Especialidad, ObraSocial, Recordatorio
 from datetime import date
 from django.db.models import Count
 from django.contrib.auth.views import LoginView, LogoutView
@@ -14,8 +14,9 @@ from .forms import PacienteForm, TurnoForm
 from django.contrib import messages 
 from django.shortcuts import redirect
 from django.core.exceptions import PermissionDenied
+from django.contrib.auth import login
 
-class HomeView(TemplateView):
+class HomeView(LoginRequiredMixin, TemplateView):
     """Vista de inicio. Muestra estadísticas generales y próximos turnos."""
 
     template_name = "clinica/home.html"
@@ -83,17 +84,31 @@ class CustomLogoutView(LogoutView):
 class RegistroView(CreateView):
     form_class = UserCreationForm
     template_name = 'auth/registro.html'
-    success_url = reverse_lazy('app:login')
 
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            messages.info(request, "Ya estás registrado y logueado.")
+            return redirect('app:home')
+        return super().dispatch(request, *args, **kwargs)
+    
     def form_valid(self, form):
+        user=form.save()
+        login(self.request, user)
         messages.success(self.request, "¡Registro exitoso! Ahora puedes iniciar sesión.")
-        return super().form_valid(form)
-
+        return redirect('app:registro_paciente')
+    
 # Vistas de Gestión de Pacientes y Perfil
 class RegistroPacienteView(LoginRequiredMixin, CreateView):
     template_name = 'clinica/registro_paciente.html'
     form_class = PacienteForm
     success_url = reverse_lazy('app:home')
+
+    def dispatch(self, request, *args, **kwargs):
+        # Si el usuario ya tiene un perfil de paciente, lo redirigimos a su perfil
+        if hasattr(request.user, 'paciente'):
+            messages.info(request, "Ya tienes un perfil de paciente registrado.")
+            return redirect('app:home')
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         form.instance.usuario = self.request.user
