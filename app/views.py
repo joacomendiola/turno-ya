@@ -205,6 +205,13 @@ class ListaTurnosView(LoginRequiredMixin, ListView):
             return Turno.objects.filter(medico=user.medico)
         return Turno.objects.none()
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Banderas booleanas para la "Tabla Inteligente" del template
+        context['es_medico'] = hasattr(self.request.user, 'medico')
+        context['es_paciente'] = hasattr(self.request.user, 'paciente')
+        return context
+    
 class AceptarTurnoView(LoginRequiredMixin, UpdateView):
     model = Turno
     template_name = 'clinica/aceptar_turno.html'

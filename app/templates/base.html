@@ -16,6 +16,7 @@
         aria-controls="navMenu" aria-expanded="false" aria-label="Alternar navegación">
         <span class="navbar-toggler-icon"></span>
       </button>
+
       <div class="collapse navbar-collapse" id="navMenu">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           {% if user.is_authenticated %}
@@ -28,15 +29,34 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'app:lista_pacientes' %}">Pacientes</a>
           </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'app:lista_turnos' %}">Mis Turnos</a>
+          </li>
+
+          {% if user.paciente %}
           <li class="nav-item">
             <a class="nav-link" href="{% url 'app:nuevo_turno' %}">Solicitar Turno</a>
           </li>
           {% endif %}
 
+          {% if user.is_staff %}
+          <li class="nav-item">
+            <a class="nav-link text-warning fw-bold" href="{% url 'admin:index' %}" target="_blank">Panel Admin</a>
+          </li>
+          {% endif %}
+
+          {% endif %}
         </ul>
 
         <div class="d-flex align-items-center gap-2">
           {% if user.is_authenticated %}
+
+          {% if user.paciente %}
+          <a class="text-white text-decoration-none me-3 border-end pe-3" href="{% url 'app:perfil_paciente' %}">Mi
+            Perfil</a>
+          {% endif %}
+
           <span class="text-white-50 small">Hola, {{ user.username }}</span>
           <form method="post" action="{% url 'app:logout' %}" class="d-inline">
             {% csrf_token %}
@@ -53,7 +73,6 @@
 
   <main class="container my-4">
     {% block content %}
-    <!-- Contenido de cada página -->
     {% endblock %}
   </main>
 
