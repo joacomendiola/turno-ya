@@ -1,7 +1,7 @@
 """Vistas iniciales para navegar médicos y pantalla de inicio."""
 
  
-from django.views.generic import CreateView, ListView, TemplateView, DetailView, UpdateView
+from django.views.generic import CreateView, ListView, TemplateView, DetailView, UpdateView, View
 from app.models import Medico, Turno, Paciente, Ausencia, Especialidad, ObraSocial, Recordatorio
 from datetime import date, datetime
 from django.db.models import Count
@@ -12,7 +12,7 @@ from django.urls import reverse_lazy
 from django.http import Http404
 from .forms import PacienteForm, TurnoForm
 from django.contrib import messages 
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import login
 
@@ -23,6 +23,12 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        user = self.request.user
+        if hasattr(user, 'paciente'):
+            context['recordatorios_pendientes'] = Recordatorio.objects.filter(
+            turno__paciente=user.paciente,
+            turno__propuesta_pendiente=True
+        ).count()
         context.update({
             "total_medicos": Medico.objects.count(),
             "total_pacientes": Paciente.objects.count(),
@@ -32,7 +38,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
             "prox_turnos": Turno.objects.filter(fecha_hora__gte=date.today()).order_by("fecha_hora")[:5],
             "medicos_por_especialidad": Medico.objects.values("especialidad").annotate(count=Count("id")).order_by("-count"),
             "ausencias_activas": Ausencia.objects.filter(fecha_inicio__lte=date.today(), fecha_fin__gte=date.today()).count(),
-            "especialidades": Especialidad.objects.prefetch_related("medico").all(),
+            "especialidades": Especialidad.objects.con_medicos_activos().prefetch_related("medico"),
         })
         return context
 
@@ -53,8 +59,8 @@ class ListaMedicosView(LoginRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Enviamos todas las especialidades disponibles para renderizar el <select>
-        context["especialidades"] = Especialidad.objects.all()
+        # Agregamos la lista de especialidades para el filtro, solo con las que tienen médicos activos
+        context["especialidades"] = Especialidad.objects.con_medicos_activos()
         return context
 
 class DetalleMedicoView(LoginRequiredMixin, DetailView):
@@ -147,6 +153,18 @@ class ListaPacientesView(LoginRequiredMixin, ListView):
         if not (hasattr(request.user, 'medico') or request.user.is_staff):
             raise PermissionDenied("No tienes permisos para ver el directorio de pacientes.")
         return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            queryset = Paciente.objects.buscar_por_apellido(q)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['q'] = self.request.GET.get('q', '').strip()
+        return context
 
 # Vistas de Gestión de Turnos
 class NuevoTurnoView(LoginRequiredMixin, CreateView):
@@ -175,6 +193,21 @@ class NuevoTurnoView(LoginRequiredMixin, CreateView):
             for error in errors:
                 form.add_error(None, error)
             return self.form_invalid(form)
+
+class DetalleTurnoView(LoginRequiredMixin, DetailView):
+    model = Turno
+    template_name = 'clinica/detalle_turno.html'
+    context_object_name = 'turno'
+
+    def get_object(self, queryset=None):
+        turno = super().get_object(queryset)
+        user = self.request.user
+        # Solo el paciente o médico del turno pueden verlo
+        if hasattr(user, 'paciente') and turno.paciente == user.paciente:
+            return turno
+        elif hasattr(user, 'medico') and turno.medico == user.medico:
+            return turno
+        raise PermissionDenied("No tienes permiso para ver este turno.")
         
 class CancelarTurnoView(LoginRequiredMixin, UpdateView):
     model = Turno
@@ -296,11 +329,64 @@ class RegistrarAusenciaView(LoginRequiredMixin, CreateView):
         if request.POST.get("accion") == "reprogramar":
             turno = Turno.objects.get(pk=request.POST["turno_id"])
             nueva_fecha = datetime.strptime(request.POST["fecha_sugerida"], "%Y-%m-%d %H:%M")
-            errors = turno.update(fecha_hora=nueva_fecha)
+            errors = turno.create_proposal(nueva_fecha, creado_por=request.user, mensaje="Propuesta generada por ausencia del médico")
             if errors:
                 for error in errors:
                     messages.error(request, error)
             else:
-                messages.success(request, "Turno reprogramado correctamente.")
+                messages.success(request, "Propuesta de reprogramación creada. El paciente deberá confirmarla.")
             return redirect('app:lista_turnos')
         return super().post(request, *args, **kwargs)
+
+class AcceptProposalView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        turno = get_object_or_404(Turno, pk=pk)
+        if not hasattr(request.user, 'paciente') or turno.paciente != request.user.paciente:
+            messages.error(request, "No autorizado.")
+            return redirect('app:lista_turnos')
+        errors = turno.accept_proposal()
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+        else:
+            messages.success(request, "Has aceptado la reprogramación.")
+        return redirect('app:lista_turnos')
+
+class RejectProposalView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        turno = get_object_or_404(Turno, pk=pk)
+        if not hasattr(request.user, 'paciente') or turno.paciente != request.user.paciente:
+            messages.error(request, "No autorizado.")
+            return redirect('app:lista_turnos')
+        turno.reject_proposal()
+        messages.success(request, "Has rechazado la propuesta de reprogramación.")
+        return redirect('app:lista_turnos')
+
+class RecordatorioListView(LoginRequiredMixin, ListView):
+    model = Recordatorio
+    template_name = 'clinica/lista_recordatorios.html'
+    context_object_name = 'recordatorios'
+    paginate_by = 10
+
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user, 'paciente'):
+            return Recordatorio.objects.filter(
+                turno__paciente=user.paciente
+            ).select_related('turno__medico', 'turno__paciente').order_by('-fecha')
+        elif hasattr(user, 'medico'):
+            return Recordatorio.objects.filter(
+                turno__medico=user.medico
+            ).select_related('turno__medico', 'turno__paciente').order_by('-fecha')
+        return Recordatorio.objects.none()
+
+class PropuestasPacienteView(LoginRequiredMixin, ListView):
+    model = Turno
+    template_name = 'clinica/lista_propuestas.html'
+    context_object_name = 'turnos'
+
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user, 'paciente'):
+            return Turno.objects.filter(paciente=user.paciente, propuesta_pendiente=True)
+        return Turno.objects.none()

@@ -84,6 +84,12 @@ class ObraSocialAdmin(admin.ModelAdmin):
     list_display = ("name", "requiereToken", "sitioWeb")
     search_fields = ("name",)
     list_filter = ("requiereToken",)
+    fieldsets = (
+        ("Información de la obra social", {
+            "fields": ("name", "requiereToken", "sitioWeb"),
+        }),
+    )
+
 
 @admin.register(Ausencia)
 class AusenciaAdmin(admin.ModelAdmin):
@@ -92,3 +98,8 @@ class AusenciaAdmin(admin.ModelAdmin):
     list_filter = ("medico", "fecha_inicio", "fecha_fin")
     search_fields = ("medico__apellido", "medico__nombre", "motivo")
     date_hierarchy = "fecha_inicio"
+    fieldsets = (
+        ("Información de la ausencia", {
+            "fields": ("medico", "fecha_inicio", "fecha_fin", "motivo"),
+        }),
+    )

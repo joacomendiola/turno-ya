@@ -1,7 +1,7 @@
 
 from django.db import models
 from datetime import date, timedelta
-from app.models.medico import Medico
+from app.models.medico import Medico, Turno
 
 class Ausencia(models.Model):
 

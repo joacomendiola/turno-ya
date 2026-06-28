@@ -21,14 +21,6 @@ class Medico(models.Model):
         """Retorna una etiqueta legible para listados y admin."""
         return f"Dr/a. {self.apellido}, {self.nombre}"
 
-    def nombre_completo(self):
-        """Retorna nombre y apellido concatenados."""
-        return f"{self.nombre} {self.apellido}"
-
-    def cantidad_turnos(self):
-        """Retorna la cantidad total de turnos asociados a este médico."""
-        return self.turno_set.count()
-
     @classmethod
     def validate(cls, nombre, apellido, matricula, especialidad):
         """

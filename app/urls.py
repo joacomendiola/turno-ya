@@ -26,9 +26,18 @@ urlpatterns = [
     path('pacientes/perfil/', views.PerfilPacienteView.as_view(), name='perfil_paciente'), 
     path('pacientes/', views.ListaPacientesView.as_view(), name='lista_pacientes'),
     
+    # Recordatorios
+    path("recordatorios/", views.RecordatorioListView.as_view(), name="lista_recordatorios"),
+
+    #Propuesta de reprogramación
+    path("propuestas/", views.PropuestasPacienteView.as_view(), name="lista_propuestas"),
+    path("propuesta/<int:pk>/aceptar/", views.AcceptProposalView.as_view(), name="aceptar_propuesta"),
+    path("propuesta/<int:pk>/rechazar/", views.RejectProposalView.as_view(), name="rechazar_propuesta"),
+
     # Turnos
     path('turnos/', views.ListaTurnosView.as_view(), name='lista_turnos'),
     path('turnos/nuevo/', views.NuevoTurnoView.as_view(), name='nuevo_turno'),
+    path("turnos/<int:pk>/detalle/", views.DetalleTurnoView.as_view(), name="detalle_turno"),
     path("turnos/<int:pk>/cancelar/", views.CancelarTurnoView.as_view(), name="cancelar_turno"),
     path("turnos/<int:pk>/aceptar/", views.AceptarTurnoView.as_view(), name="aceptar_turno"),
 ]

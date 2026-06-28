@@ -46,7 +46,7 @@ class Paciente(models.Model):
             errors.append("El DNI debe tener entre 7 y 8 dígitos.")
         return errors
     
-
+    @classmethod
     def new(cls, nombre, apellido, dni, email, usuario):
         errors = cls.validate(nombre, apellido, dni, email)
         if errors:
@@ -54,11 +54,12 @@ class Paciente(models.Model):
         paciente = cls.objects.create(nombre=nombre, apellido=apellido, dni=dni, email=email, usuario=usuario)
         return paciente, []
 
-    def update(self, **kwargs):
+    @classmethod
+    def update(cls, paciente, **kwargs):
         for field, value in kwargs.items():
-            setattr(self, field, value)
-        errors = self.validate(self.nombre, self.apellido, self.dni, self.email)
+            setattr(paciente, field, value)
+        errors = cls.validate(paciente.nombre, paciente.apellido, paciente.dni, paciente.email)
         if errors:
             return errors
-        self.save()
+        paciente.save()
         return []
