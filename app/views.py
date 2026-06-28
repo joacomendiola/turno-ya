@@ -212,17 +212,16 @@ class AceptarTurnoView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('app:lista_turnos')
 
     def get_queryset(self):
-        #Restringe los turnos únicamente al paciente logueado.
-        user = self.request.user
-        if hasattr(user, 'paciente'):
-            return Turno.objects.filter(paciente=user.paciente)
-        # Si no es paciente (ej: es médico o admin), no ve ningún turno en esta vista
+        # Filtra para que solo vea turnos el médico
+        if hasattr(self.request.user, 'medico'):
+            return Turno.objects.filter(medico=self.request.user.medico)
         return Turno.objects.none()
 
+
     def form_valid(self, form):
-        # 1. Validar que el usuario tenga perfil de paciente
-        if not hasattr(self.request.user, 'paciente'):
-            raise PermissionDenied("Solo los pacientes pueden aceptar turnos.")
+        # Valida exclusividad del médico
+        if not hasattr(self.request.user, 'medico'):
+            raise PermissionDenied("Solo los médicos pueden aceptar turnos.")
 
         turno = self.get_object()
 
