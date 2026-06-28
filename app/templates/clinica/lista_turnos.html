@@ -52,13 +52,9 @@
         {% endif %}
 
         <td>
-          {% if turno.estado == 'pendiente' %}
-          <span class="badge bg-warning text-dark">Pendiente</span>
-          {% elif turno.estado == 'confirmado' %}
-          <span class="badge bg-success">Confirmado</span>
-          {% else %}
-          <span class="badge bg-danger">Cancelado</span>
-          {% endif %}
+          <span class="badge bg-{% if turno.estado == 'confirmado' %}success{% elif turno.estado == 'pendiente' %}warning text-dark{% else %}danger{% endif %}">
+            {{ turno.get_estado_display }}
+          </span>
         </td>
 
         <td>
