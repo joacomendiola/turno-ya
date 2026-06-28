@@ -75,8 +75,11 @@ class CustomLoginView(LoginView):
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        messages.success(self.request, f"¡Bienvenido/a al sistema, {self.request.user.username}!")
+        if hasattr(self.request.user, "medico"):
+            # aquí ya sé que es médico
+            return reverse_lazy('app:home')
         return reverse_lazy('app:home')
+    
     
 class CustomLogoutView(LogoutView):
     next_page = reverse_lazy('app:login')
@@ -225,22 +228,21 @@ class AceptarTurnoView(LoginRequiredMixin, UpdateView):
 
         turno = self.get_object()
 
-        # 2. Validar que el turno pertenezca a request.user.paciente 
-        # (Ya lo cubre el get_queryset, pero lo reforzamos acá por seguridad)
-        if turno.paciente != self.request.user.paciente:
-            raise PermissionDenied("Este turno no te pertenece.")
-
-        # 3. Validar que solo se pueda aceptar si turno.estado == "pendiente"
+        # Validar que solo se pueda aceptar si turno.estado == "pendiente"
         if turno.estado != 'pendiente':
             messages.error(self.request, "Este turno ya no está pendiente.")
             return redirect(self.success_url)
+        
+        turno = self.get_object()
+        errors = turno.update(estado='confirmado')
 
-        # Si pasa todas las validaciones, mutamos el estado y guardamos
-        turno.estado = 'confirmado'
-        turno.save()
-
-        messages.success(self.request, "El turno ha sido confirmado exitosamente.")
-        return redirect(self.success_url)
+        if not errors:
+            messages.success(self.request, "Turno confirmado.")
+            return redirect(self.success_url)
+        else:
+            for error in errors:
+                messages.error(self.request, error)
+            return self.form_invalid(form)
 
 class RegistrarAusenciaView(LoginRequiredMixin, CreateView):
     model = Ausencia
