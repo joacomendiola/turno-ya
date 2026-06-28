@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Propuestas de reprogramación{% endblock %}
+{% block content %}
+<h3>Propuestas pendientes</h3>
+{% for turno in turnos %}
+  {% if turno.propuesta_pendiente %}
+  <div class="card mb-2">
+    <div class="card-body">
+      <p><strong>Turno:</strong> {{ turno }} — <strong>Propuesta:</strong> {{ turno.propuesta_fecha|date:"d/m/Y H:i" }}</p>
+      <p>{{ turno.propuesta_mensaje }}</p>
+      <form method="post" action="{% url 'app:aceptar_propuesta' turno.pk %}" class="d-inline">{% csrf_token %}
+        <button class="btn btn-success btn-sm">Aceptar</button>
+      </form>
+      <form method="post" action="{% url 'app:rechazar_propuesta' turno.pk %}" class="d-inline">{% csrf_token %}
+        <button class="btn btn-danger btn-sm">Rechazar</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+{% empty %}
+  <p>No hay propuestas pendientes.</p>
+{% endfor %}
+{% endblock %}

@@ -32,6 +32,18 @@
           </li>
           {% endif %}
           <li class="nav-item">
+            <a class="nav-link" href="{% url 'app:lista_recordatorios' %}">
+            Recordatorios <span class="badge bg-warning">{{ recordatorios_pendientes }}</span>
+            </a>
+          </li>
+          
+          {% if user.paciente %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'app:lista_propuestas' %}">Propuestas</a>
+            </li>
+          {% endif %}
+
+          <li class="nav-item">
             <a class="nav-link" href="{% url 'app:lista_turnos' %}">Mis Turnos</a>
           </li>
 

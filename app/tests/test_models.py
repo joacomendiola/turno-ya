@@ -506,29 +506,34 @@ class AceptarTurnoViewSecurityTests(TestCase):
         # 1. Configuramos una especialidad y médico totalmente distintos
         self.esp = Especialidad.objects.create(nombre="Dermatología")
         self.medico = Medico.objects.create(
-            nombre="Esteban", 
-            apellido="Quito", 
-            matricula="MP-8841", 
+            nombre="Esteban",
+            apellido="Quito",
+            matricula="MP-8841",
             especialidad=self.esp
         )
+
+        # asociar usuario al médico (para permitir que el médico realice la acción)
+        self.user_medico = User.objects.create_user(username='medico_test', password='medpass')
+        self.medico.usuario = self.user_medico
+        self.medico.save()
 
         # 2. Crear Paciente 1 (Mariela - Dueña legítima del turno)
         self.user_mariela = User.objects.create_user(username='mariela', password='456')
         self.paciente_mariela = Paciente.objects.create(
-            nombre="Mariela", 
-            apellido="Benítez", 
-            dni=33444555, 
-            email="mariela@correo.com", 
+            nombre="Mariela",
+            apellido="Benítez",
+            dni=33444555,
+            email="mariela@correo.com",
             usuario=self.user_mariela
         )
 
         # 3. Crear Paciente 2 (Gastón - El usuario intruso)
         self.user_gaston = User.objects.create_user(username='gaston', password='456')
         self.paciente_gaston = Paciente.objects.create(
-            nombre="Gastón", 
-            apellido="Herrera", 
-            dni=22555888, 
-            email="gaston@correo.com", 
+            nombre="Gastón",
+            apellido="Herrera",
+            dni=22555888,
+            email="gaston@correo.com",
             usuario=self.user_gaston
         )
 
@@ -537,7 +542,7 @@ class AceptarTurnoViewSecurityTests(TestCase):
 
         # 5. Definimos los turnos de prueba asociados a Mariela
         self.fecha = timezone.now() + timedelta(days=3)
-        
+
         self.turno_pendiente = Turno.objects.create(
             medico=self.medico,
             paciente=self.paciente_mariela,
@@ -560,19 +565,20 @@ class AceptarTurnoViewSecurityTests(TestCase):
         """Valida que Gastón no pueda meterse a confirmar el turno de Mariela"""
         self.client.login(username='gaston', password='456')
         url = reverse('app:aceptar_turno', kwargs={'pk': self.turno_pendiente.pk})
-        
+
         response = self.client.post(url)
         # El get_queryset los filtra, por ende debe retornar 404 Not Found
         self.assertEqual(response.status_code, 404)
 
     def test_aceptar_turno_que_no_esta_pendiente(self):
-        """Valida que Mariela no pueda volver a aceptar un turno ya confirmado"""
-        self.client.login(username='mariela', password='456')
+        """Valida que el médico no pueda volver a aceptar un turno ya confirmado"""
+        # ahora el actor es el médico (solo médicos pueden aceptar turnos)
+        self.client.login(username='medico_test', password='medpass')
         url = reverse('app:aceptar_turno', kwargs={'pk': self.turno_ya_confirmado.pk})
-        
+
         response = self.client.post(url)
         self.assertRedirects(response, reverse('app:lista_turnos'))
-        
+
         # Corroboramos que mantenga su estado original en BD
         self.turno_ya_confirmado.refresh_from_db()
         self.assertEqual(self.turno_ya_confirmado.estado, 'confirmado')
@@ -581,6 +587,6 @@ class AceptarTurnoViewSecurityTests(TestCase):
         """Valida que un usuario sin vincular a Paciente rebote directamente"""
         self.client.login(username='admin_test', password='456')
         url = reverse('app:aceptar_turno', kwargs={'pk': self.turno_pendiente.pk})
-        
+
         response = self.client.post(url)
         self.assertEqual(response.status_code, 404)

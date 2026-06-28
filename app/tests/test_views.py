@@ -1,10 +1,18 @@
 from datetime import date, timedelta
 from django.test import TestCase
 from django.urls import reverse
-from app.models import Especialidad, Medico, ObraSocial, Paciente, Turno, Ausencia
 from django.contrib.auth.models import User
+from app.models import (
+    Especialidad,
+    Medico,
+    ObraSocial,
+    Paciente,
+    Turno,
+    Ausencia,
+    Recordatorio,
+)
 
-#TEST VIEW DETALLE MEDICO
+# TEST VIEW DETALLE MEDICO
 class DetalleMedicoViewTest(TestCase):
     """Prueba el comportamiento de la vista de detalle del médico y sus restricciones."""
 
@@ -79,16 +87,14 @@ class DetalleMedicoViewTest(TestCase):
 
 class HomeViewTest(TestCase):
     """Pruebas para la vista de inicio (HomeView)."""
+
     def setUp(self):
-        self.especialidad = Especialidad.objects.create(
-            nombre="Pediatría"
-        )
+        self.especialidad = Especialidad.objects.create(nombre="Pediatría")
         self.medico = Medico.objects.create(
             nombre="Laura",
             apellido="Romero",
             matricula="9999",
             especialidad=self.especialidad
-            
         )
         usuario = User.objects.create_user(username="testuser", password="testpass")
         self.paciente = Paciente.objects.create(
@@ -97,7 +103,7 @@ class HomeViewTest(TestCase):
             dni="12345678",
             email="juan@gmail.com",
             usuario=usuario
-        )  
+        )
         self.turno = Turno.objects.create(
             medico=self.medico,
             paciente=self.paciente,
@@ -105,12 +111,12 @@ class HomeViewTest(TestCase):
             motivo="Consulta general",
             estado="pendiente",
             creado_por=usuario
-        )        
+        )
         Ausencia.objects.create(
             medico=self.medico,
             motivo="Licencia",
             fecha_inicio=date.today(),
-            fecha_fin=date.today(),
+            fecha_fin=date.today()
         )
         # Loguear el cliente de pruebas para acceder a HomeView (requiere login)
         self.client.login(username="testuser", password="testpass")
@@ -143,12 +149,127 @@ class AuthViewCBVTest(TestCase):
     """Pruebas para la vista de autenticación basada en clases."""
 
     def test_pantalla_login_carga_correctamente(self):
-        """Verifica que la página de login se muestre sin errores."""
-        response = self.client.get(reverse('app:login'))
+        response = self.client.get(reverse("app:login"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'auth/login.html')
-    
-    def test_pantalla_login_con_datos_validos_redirige(self):
-        response = self.client.get(reverse('app:registro'))
+        self.assertTemplateUsed(response, "auth/login.html")
+
+    def test_pantalla_registro_carga_correctamente(self):
+        response = self.client.get(reverse("app:registro"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'auth/registro.html')
+        self.assertTemplateUsed(response, "auth/registro.html")
+
+
+class TemplateCoverageTest(TestCase):
+    """Cobertura básica de templates para vistas sin tests previos."""
+
+    def setUp(self):
+        self.especialidad = Especialidad.objects.create(nombre="General")
+        self.user_medico = User.objects.create_user(username="medico", password="pass")
+        self.medico = Medico.objects.create(
+            nombre="Ana",
+            apellido="García",
+            matricula="M-123",
+            especialidad=self.especialidad,
+            usuario=self.user_medico
+        )
+        self.user_paciente = User.objects.create_user(username="paciente", password="pass")
+        self.paciente = Paciente.objects.create(
+            nombre="Juan",
+            apellido="Pérez",
+            dni=12345678,
+            email="juan@mail.com",
+            usuario=self.user_paciente
+        )
+        self.turno = Turno.objects.create(
+            medico=self.medico,
+            paciente=self.paciente,
+            fecha_hora=date.today() + timedelta(days=1),
+            motivo="Consulta",
+            creado_por=self.user_paciente
+        )
+        self.ausencia = Ausencia.objects.create(
+            medico=self.medico,
+            motivo="Licencia",
+            fecha_inicio=date.today() + timedelta(days=2),
+            fecha_fin=date.today() + timedelta(days=4),
+        )
+
+    def test_lista_medicos_template(self):
+        self.client.login(username="paciente", password="pass")
+        response = self.client.get(reverse("app:lista_medicos"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clinica/lista_medicos.html")
+        self.assertContains(response, "Directorio de Médicos")
+
+    def test_lista_pacientes_template(self):
+        self.client.login(username="medico", password="pass")
+        response = self.client.get(reverse("app:lista_pacientes"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clinica/lista_pacientes.html")
+        self.assertContains(response, "Directorio de Pacientes")
+
+    def test_registro_paciente_template(self):
+        new_user = User.objects.create_user(username="nuevo", password="pass")
+        self.client.login(username="nuevo", password="pass")
+        response = self.client.get(reverse("app:registro_paciente"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clinica/registro_paciente.html")
+        self.assertContains(response, "Registro de nuevo paciente")
+
+    def test_perfil_paciente_template(self):
+        self.client.login(username="paciente", password="pass")
+        response = self.client.get(reverse("app:perfil_paciente"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clinica/perfil_paciente.html")
+
+    def test_nuevo_turno_template(self):
+        self.client.login(username="paciente", password="pass")
+        response = self.client.get(reverse("app:nuevo_turno"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clinica/nuevo_turno.html")
+        self.assertContains(response, "Solicitar un nuevo turno")
+
+    def test_nueva_ausencia_template(self):
+        self.client.login(username="medico", password="pass")
+        response = self.client.get(reverse("app:registrar_ausencia"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clinica/nueva_ausencia.html")
+        self.assertContains(response, "Registrar Ausencia")
+
+    def test_lista_turnos_template(self):
+        self.client.login(username="paciente", password="pass")
+        response = self.client.get(reverse("app:lista_turnos"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clinica/lista_turnos.html")
+        self.assertContains(response, "Mis Turnos")
+
+    def test_lista_recordatorios_template(self):
+        Recordatorio.objects.create(
+            turno=self.turno,
+            mensaje="Recuerda tu turno",
+            fecha=date.today()
+        )
+        self.client.login(username="paciente", password="pass")
+        response = self.client.get(reverse("app:lista_recordatorios"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clinica/lista_recordatorios.html")
+        self.assertContains(response, "Recordatorios")
+
+    def test_detalle_turno_template(self):
+        self.client.login(username="paciente", password="pass")
+        response = self.client.get(reverse("app:detalle_turno", kwargs={"pk": self.turno.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clinica/detalle_turno.html")
+        self.assertContains(response, "Detalle del Turno")
+
+    def test_aceptar_turno_template(self):
+        self.client.login(username="medico", password="pass")
+        response = self.client.get(reverse("app:aceptar_turno", kwargs={"pk": self.turno.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clinica/aceptar_turno.html")
+
+    def test_cancelar_turno_template(self):
+        self.client.login(username="paciente", password="pass")
+        response = self.client.get(reverse("app:cancelar_turno", kwargs={"pk": self.turno.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clinica/cancelar_turno.html")

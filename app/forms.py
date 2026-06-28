@@ -12,8 +12,8 @@ class PacienteForm(forms.ModelForm):
     # Validación personalizada 1
     def clean_dni(self):
         dni = self.cleaned_data.get('dni')
-        if dni and len(str(dni)) < 7:
-            raise ValidationError("El DNI debe tener al menos 7 dígitos.")
+        if dni and 8 > len(str(dni)) < 7 :
+            raise ValidationError("El DNI debe tener entre 7 y 8 dígitos.")
         return dni
 
 class TurnoForm(forms.ModelForm):

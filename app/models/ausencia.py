@@ -1,6 +1,5 @@
-
 from django.db import models
-from datetime import date
+from datetime import date, timedelta
 from app.models.medico import Medico
 
 class Ausencia(models.Model):
@@ -94,3 +93,27 @@ class Ausencia(models.Model):
         self.fecha_fin = fecha_fin
         self.save()
         return []
+    @classmethod
+    def turnos_conflicto(cls, medico, fecha_inicio, fecha_fin):
+        """Busca turnos activos del médico dentro del rango de ausencia."""
+        from app.models.turno import Turno  # Importación local para evitar problemas de dependencia circular
+
+        return Turno.objects.filter(
+            medico=medico,
+            estado__in=["pendiente", "confirmado"],
+            fecha_hora__date__gte=max(fecha_inicio, date.today()),
+            fecha_hora__date__lte=fecha_fin,
+        )
+
+    @classmethod
+    def sugerencias_reprogramacion(cls, turnos, fecha_fin):
+        """Genera sugerencias simples de reprogramación para los turnos en conflicto."""
+        fecha_sugerida = fecha_fin + timedelta(days=1)
+        return [
+            {
+                "turno": turno,
+                "fecha_original": turno.fecha_hora,
+                "fecha_sugerida": fecha_sugerida,
+            }
+            for turno in turnos
+        ]

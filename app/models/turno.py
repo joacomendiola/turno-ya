@@ -17,7 +17,12 @@ class Turno(models.Model):
     motivo = models.TextField()
     estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
     creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-
+    propuesta_fecha = models.DateTimeField(null=True, blank=True)
+    propuesta_pendiente = models.BooleanField(default=False)
+    propuesta_mensaje = models.TextField(null=True, blank=True)
+    propuesta_creado_por = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL, related_name='propuestas_creadas'
+    )
     class Meta:
         unique_together = ('medico', 'fecha_hora')
 
@@ -80,5 +85,43 @@ class Turno(models.Model):
             return errors
         for field, value in kwargs.items():
             setattr(self, field, value)
+        self.save()
+        return []
+    
+    # "Propuesta de reprogramación para el caso de solapamiento con ausencia del médico, creacion, aceptación y rechazo de la propuesta"
+    def create_proposal(self, fecha, creado_por=None, mensaje=None):
+        self.propuesta_fecha = fecha
+        self.propuesta_pendiente = True
+        self.propuesta_mensaje = mensaje or ""
+        self.propuesta_creado_por = creado_por
+        self.save()
+        # Notificar creando un Recordatorio (opcional)
+        from app.models.recordatorio import Recordatorio
+        Recordatorio.objects.create(
+            turno=self,
+            mensaje=f"Propuesta de reprogramación a {fecha.strftime('%d/%m/%Y %H:%M')}. {self.propuesta_mensaje}",
+            fecha=timezone.now()
+        )
+        return []
+    
+    def accept_proposal(self):
+        if not self.propuesta_pendiente or not self.propuesta_fecha:
+            return ["No hay propuesta pendiente."]
+        errors = self.update(fecha_hora=self.propuesta_fecha)
+        if errors:
+            return errors
+        # limpiar campos de propuesta
+        self.propuesta_fecha = None
+        self.propuesta_pendiente = False
+        self.propuesta_mensaje = None
+        self.propuesta_creado_por = None
+        self.save()
+        return []
+
+    def reject_proposal(self):
+        self.propuesta_fecha = None
+        self.propuesta_pendiente = False
+        self.propuesta_mensaje = None
+        self.propuesta_creado_por = None
         self.save()
         return []

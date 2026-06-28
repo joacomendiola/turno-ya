@@ -16,14 +16,12 @@
         {% else %}
         <th>Médico</th>
         {% endif %}
-
         <th>Motivo</th>
-
         {% if es_medico %}
         <th>Observaciones Médicas</th>
         {% endif %}
-
         <th>Estado</th>
+        <th>Detalle</th>
         <th>Acciones</th>
       </tr>
     </thead>
@@ -61,6 +59,12 @@
           {% else %}
           <span class="badge bg-danger">Cancelado</span>
           {% endif %}
+        </td>
+
+        <td>
+          <a href="{% url 'app:detalle_turno' turno.id %}" class="btn btn-sm btn-outline-primary">
+            Ver detalle
+          </a>
         </td>
 
         <td>
