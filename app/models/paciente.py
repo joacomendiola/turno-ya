@@ -1,4 +1,3 @@
-
 # 3. Paciente
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -54,12 +53,11 @@ class Paciente(models.Model):
         paciente = cls.objects.create(nombre=nombre, apellido=apellido, dni=dni, email=email, usuario=usuario)
         return paciente, []
 
-    @classmethod
-    def update(cls, paciente, **kwargs):
+    def update(self, **kwargs):  # Solo self, sin cls
         for field, value in kwargs.items():
-            setattr(paciente, field, value)
-        errors = cls.validate(paciente.nombre, paciente.apellido, paciente.dni, paciente.email)
+            setattr(self, field, value)
+        errors = self.__class__.validate(self.nombre, self.apellido, self.dni, self.email)
         if errors:
             return errors
-        paciente.save()
+        self.save()
         return []

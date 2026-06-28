@@ -263,7 +263,7 @@ class AceptarTurnoView(LoginRequiredMixin, UpdateView):
 
     def dispatch (self, request, *args, **kwargs):
         if not hasattr(request.user, 'medico'):
-            raise PermissionDenied("Solo los médicos pueden aceptar turnos.")
+            raise Http404("Solo los médicos pueden aceptar turnos.")
         return super().dispatch(request, *args, **kwargs)
 
 

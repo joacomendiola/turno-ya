@@ -1,7 +1,6 @@
-
 from django.db import models
 from datetime import date, timedelta
-from app.models.medico import Medico, Turno
+from app.models.medico import Medico
 
 class Ausencia(models.Model):
 
@@ -97,6 +96,8 @@ class Ausencia(models.Model):
     @classmethod
     def turnos_conflicto(cls, medico, fecha_inicio, fecha_fin):
         """Busca turnos activos del médico dentro del rango de ausencia."""
+        from app.models.turno import Turno  # Importación local para evitar problemas de dependencia circular
+
         return Turno.objects.filter(
             medico=medico,
             estado__in=["pendiente", "confirmado"],
