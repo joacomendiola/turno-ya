@@ -255,9 +255,6 @@ class RegistrarAusenciaView(LoginRequiredMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        if not hasattr(self.request.user, 'medico'):
-            raise PermissionDenied("Solo los médicos pueden cargar ausencias.")
-        
         ausencia, errors = Ausencia.new(
             medico=self.request.user.medico,
             motivo=form.cleaned_data['motivo'],
