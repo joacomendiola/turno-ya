@@ -58,5 +58,30 @@
   </div>
 </div>
 {% endif %}
-
+{% if especialidades %}
+<div class="row mt-4">
+  <div class="col">
+    <h2>Médicos por especialidad</h2>
+    {% for especialidad in especialidades %}
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">{{ especialidad.nombre }}</h5>
+          {% if especialidad.medico.all %}
+            <ul class="list-group list-group-flush">
+              {% for medico in especialidad.medico.all %}
+                <li class="list-group-item">
+                  {{ medico.nombre }} {{ medico.apellido }}
+                  <span class="text-muted">({{ medico.matricula }})</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No hay médicos cargados en esta especialidad.</p>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
 {% endblock %}

@@ -31,7 +31,8 @@ class HomeView(LoginRequiredMixin, TemplateView):
             "turnos_cancelados": Turno.objects.filter(estado="cancelado").count(),
             "prox_turnos": Turno.objects.filter(fecha_hora__gte=date.today()).order_by("fecha_hora")[:5],
             "medicos_por_especialidad": Medico.objects.values("especialidad").annotate(count=Count("id")).order_by("-count"),
-            "ausencias_activas": Ausencia.objects.filter(fecha_inicio__lte=date.today(), fecha_fin__gte=date.today()).count()
+            "ausencias_activas": Ausencia.objects.filter(fecha_inicio__lte=date.today(), fecha_fin__gte=date.today()).count(),
+            "especialidades": Especialidad.objects.prefetch_related("medico").all(),
         })
         return context
 
@@ -222,7 +223,7 @@ class AceptarTurnoView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         turno = self.get_object()
-        
+
         # Validar que solo se pueda aceptar si turno.estado == "pendiente"
         if turno.estado != 'pendiente':
             messages.error(self.request, "Este turno ya no está pendiente.")
