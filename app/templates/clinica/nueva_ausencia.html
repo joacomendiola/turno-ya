@@ -11,6 +11,30 @@
             <h4 class="mb-0">Registrar Ausencia</h4>
         </div>
         <div class="card-body">
+            {% if sugerencias %}
+            <div class="alert alert-warning">
+                <h5 class="mb-2">Turnos activos afectados</h5>
+                <p class="mb-3">Estos turnos quedan dentro del período de ausencia:</p>
+                <ul class="list-group">
+                    {% for item in sugerencias %}
+                    <li class="list-group-item">
+                        Turno de <strong>{{ item.turno.paciente }}</strong> el
+                        <strong>{{ item.fecha_original|date:"d/m/Y H:i" }}</strong>
+                        puede reprogramarse para
+                        <strong>{{ item.fecha_sugerida|date:"d/m/Y" }}</strong>.
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="turno_id" value="{{ item.turno.id }}">
+                            <input type="hidden" name="fecha_sugerida" value="{{ item.fecha_sugerida|date:"Y-m-d H:i" }}">
+                            <button type="submit" name="accion" value="reprogramar" class="btn btn-sm btn-primary">
+                                Reprogramar
+                            </button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
             <form method="post">
               {% csrf_token %}
               {% for field in form %}

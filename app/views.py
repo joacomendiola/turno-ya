@@ -3,7 +3,7 @@
  
 from django.views.generic import CreateView, ListView, TemplateView, DetailView, UpdateView
 from app.models import Medico, Turno, Paciente, Ausencia, Especialidad, ObraSocial, Recordatorio
-from datetime import date
+from datetime import date, datetime
 from django.db.models import Count
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.forms import UserCreationForm
@@ -252,7 +252,7 @@ class RegistrarAusenciaView(LoginRequiredMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        ausencia, errors = Ausencia.new(
+        ausencia, errors, sugerencias = Ausencia.new(
             medico=self.request.user.medico,
             motivo=form.cleaned_data['motivo'],
             fecha_inicio=form.cleaned_data['fecha_inicio'],
@@ -262,6 +262,32 @@ class RegistrarAusenciaView(LoginRequiredMixin, CreateView):
             for error in errors:
                 form.add_error(None, error)
             return self.form_invalid(form)
-            
+        if sugerencias:
+            messages.warning(
+                self.request,
+                "Se encontraron turnos activos dentro del período de ausencia. "
+                "Revisa las sugerencias de reprogramación."
+            )
+            for item in sugerencias:
+                messages.warning(
+                    self.request,
+                    f"Turno de {item['turno'].paciente} el "
+                    f"{item['fecha_original'].strftime('%d/%m/%Y %H:%M')} "
+                    f"puede moverse a {item['fecha_sugerida'].strftime('%d/%m/%Y')}."
+                )
+
         messages.success(self.request, "Ausencia registrada.")
         return redirect(self.success_url)
+    
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("accion") == "reprogramar":
+            turno = Turno.objects.get(pk=request.POST["turno_id"])
+            nueva_fecha = datetime.strptime(request.POST["fecha_sugerida"], "%Y-%m-%d %H:%M")
+            errors = turno.update(fecha_hora=nueva_fecha)
+            if errors:
+                for error in errors:
+                    messages.error(request, error)
+            else:
+                messages.success(request, "Turno reprogramado correctamente.")
+            return redirect('app:lista_turnos')
+        return super().post(request, *args, **kwargs)
