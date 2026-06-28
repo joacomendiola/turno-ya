@@ -1,7 +1,7 @@
 """Configuración básica del admin para los modelos de la app."""
 
 from django.contrib import admin
-from .models import Medico, Especialidad, Paciente, Turno, Recordatorio
+from .models import Medico, Especialidad, Paciente, Turno, Recordatorio, Ausencia, ObraSocial
 
 @admin.register(Especialidad)
 class EspecialidadAdmin(admin.ModelAdmin):
@@ -77,3 +77,18 @@ class RecordatorioAdmin(admin.ModelAdmin):
     def mensaje_corto(self, obj):
         return obj.mensaje[:50] + "..." if len(obj.mensaje) > 50 else obj.mensaje
     mensaje_corto.short_description = "Mensaje"
+
+@admin.register(ObraSocial)
+class ObraSocialAdmin(admin.ModelAdmin):
+    """Configuración del panel de administración para Obras Sociales."""
+    list_display = ("name", "requiereToken", "sitioWeb")
+    search_fields = ("name",)
+    list_filter = ("requiereToken",)
+
+@admin.register(Ausencia)
+class AusenciaAdmin(admin.ModelAdmin):
+    """Configuración del panel de administración para Ausencias."""
+    list_display = ("medico", "fecha_inicio", "fecha_fin", "motivo")
+    list_filter = ("medico", "fecha_inicio", "fecha_fin")
+    search_fields = ("medico__apellido", "medico__nombre", "motivo")
+    date_hierarchy = "fecha_inicio"
