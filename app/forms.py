@@ -57,8 +57,13 @@ class TurnoForm(BootstrapModelForm):
         model = Turno
         fields = ['medico', 'fecha_hora', 'motivo']
         widgets = {
-            # Mejora UX: muestra un selector de fecha y hora real en HTML5
-            'fecha_hora': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'fecha_hora': forms.TextInput(
+                attrs={
+                    'class': 'datetimepicker bg-white', 
+                    'placeholder': 'Seleccione fecha y hora...',
+                }
+            ),
+            'motivo': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Describa brevemente el motivo de su consulta...'}),
         }
 
     # Validación personalizada 2

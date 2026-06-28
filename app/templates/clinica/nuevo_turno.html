@@ -2,31 +2,66 @@
 {% block title %}Nuevo Turno — TurnoYa{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-8">
-    <div class="card shadow">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Solicitar un nuevo turno</h4>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_green.css">
+
+<div class="row justify-content-center mt-4">
+  <div class="col-md-7">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-success text-white py-3">
+            <h4 class="mb-0 fw-bold d-flex align-items-center">
+              <i class="bi bi-calendar-plus me-2"></i> Agendar Turno Médico
+            </h4>
         </div>
-        <div class="card-body">
-            <form method="post">
+        <div class="card-body p-4 bg-white">
+            <div class="alert alert-light border mb-4 small text-muted">
+                <i class="bi bi-info-circle-fill text-success me-1"></i> 
+                Recuerde que el sistema validará de forma automática que el profesional no tenga licencias cargadas en la fecha elegida.
+            </div>
+
+            <form method="post" novalidate>
               {% csrf_token %}
+              
               {% for field in form %}
-                  <div class="mb-3">
-                      <label class="form-label fw-bold">{{ field.label }}</label>
+                  <div class="mb-4">
+                      <label class="form-label fw-bold text-secondary d-flex align-items-center">
+                        {{ field.label }}
+                      </label>
+                      
                       {{ field }}
+                      
                       {% if field.errors %}
-                          <div class="text-danger small">{{ field.errors|striptags }}</div>
+                          <div class="text-danger small mt-1">
+                            <i class="bi bi-exclamation-circle-fill me-1"></i>{{ field.errors|striptags }}
+                          </div>
                       {% endif %}
                   </div>
               {% endfor %}
-              <div class="d-grid mt-4">
-                  <button type="submit" class="btn btn-primary">Confirmar Solicitud</button>
-                  <a href="{% url 'app:lista_turnos' %}" class="btn btn-link">Cancelar</a>
+
+              <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 border-top pt-3">
+                  <a href="{% url 'app:lista_turnos' %}" class="btn btn-light px-4">Cancelar</a>
+                  <button type="submit" class="btn btn-success px-4 fw-bold shadow-sm">
+                    Confirmar Solicitud
+                  </button>
               </div>
             </form>
         </div>
     </div>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    flatpickr(".datetimepicker", {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      minDate: "today",
+      locale: "es",
+      time_24hr: true,
+      minuteIncrement: 15,
+    });
+  });
+</script>
 {% endblock %}
