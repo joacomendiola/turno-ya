@@ -242,3 +242,32 @@ class AceptarTurnoView(LoginRequiredMixin, UpdateView):
 
         messages.success(self.request, "El turno ha sido confirmado exitosamente.")
         return redirect(self.success_url)
+
+class RegistrarAusenciaView(LoginRequiredMixin, CreateView):
+    model = Ausencia
+    fields = ['motivo', 'fecha_inicio', 'fecha_fin']
+    template_name = 'clinica/nueva_ausencia.html'
+    success_url = reverse_lazy('app:home')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not hasattr(request.user, 'medico'):
+            raise PermissionDenied("Solo los médicos pueden cargar ausencias.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        if not hasattr(self.request.user, 'medico'):
+            raise PermissionDenied("Solo los médicos pueden cargar ausencias.")
+        
+        ausencia, errors = Ausencia.new(
+            medico=self.request.user.medico,
+            motivo=form.cleaned_data['motivo'],
+            fecha_inicio=form.cleaned_data['fecha_inicio'],
+            fecha_fin=form.cleaned_data['fecha_fin']
+        )
+        if errors:
+            for error in errors:
+                form.add_error(None, error)
+            return self.form_invalid(form)
+            
+        messages.success(self.request, "Ausencia registrada.")
+        return redirect(self.success_url)

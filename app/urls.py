@@ -18,6 +18,9 @@ urlpatterns = [
     # Médicos
     path("medicos/<int:pk>/", views.DetalleMedicoView.as_view(), name="detalle_medico"),
     
+    # Ausencias
+    path("ausencias/nueva/", views.RegistrarAusenciaView.as_view(), name="registrar_ausencia"),
+    
     # Protegidas (Requieren perfil de Paciente / Login)
     path('pacientes/registro/', views.RegistroPacienteView.as_view(), name='registro_paciente'),
     path('pacientes/perfil/', views.PerfilPacienteView.as_view(), name='perfil_paciente'), 

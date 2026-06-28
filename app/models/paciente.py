@@ -1,7 +1,7 @@
 
 # 3. Paciente
-from email import errors
-
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -25,13 +25,28 @@ class Paciente(models.Model):
     @classmethod
     def validate(cls, nombre, apellido, dni, email):
         errors = []
+
+        if not nombre or not nombre.strip():
+            errors.append("El nombre es obligatorio.")
+
+        if not apellido or not apellido.strip():
+            errors.append("El apellido es obligatorio.")
+
+        if not email or not email.strip():
+            errors.append("El email es obligatorio.")
+        else:
+            try:
+                validate_email(email)
+            except ValidationError:
+                errors.append("El email no tiene un formato válido.")
+
         if not dni:
             errors.append("El DNI es obligatorio.")
         elif len(str(dni)) < 7 or len(str(dni)) > 8:
             errors.append("El DNI debe tener entre 7 y 8 dígitos.")
         return errors
+    
 
-    @classmethod
     def new(cls, nombre, apellido, dni, email, usuario):
         errors = cls.validate(nombre, apellido, dni, email)
         if errors:
