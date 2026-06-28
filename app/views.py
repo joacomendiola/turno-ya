@@ -136,6 +136,13 @@ class ListaPacientesView(LoginRequiredMixin, ListView):
     model = Paciente
     template_name = 'clinica/lista_pacientes.html'
     context_object_name = 'pacientes'
+    
+   
+    def dispatch(self, request, *args, **kwargs):
+        # Si NO es médico y NO es admin, lo bloqueamos
+        if not (hasattr(request.user, 'medico') or request.user.is_staff):
+            raise PermissionDenied("No tienes permisos para ver el directorio de pacientes.")
+        return super().dispatch(request, *args, **kwargs)
 
 # Vistas de Gestión de Turnos
 class NuevoTurnoView(LoginRequiredMixin, CreateView):
@@ -204,6 +211,12 @@ class ListaTurnosView(LoginRequiredMixin, ListView):
         elif hasattr(user, 'medico'):
             return Turno.objects.filter(medico=user.medico)
         return Turno.objects.none()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['es_medico'] = hasattr(self.request.user, 'medico')
+        context['es_paciente'] = hasattr(self.request.user, 'paciente')
+        return context
     
 class AceptarTurnoView(LoginRequiredMixin, UpdateView):
     model = Turno
