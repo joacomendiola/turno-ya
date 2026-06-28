@@ -3,14 +3,28 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from .models import Paciente, Turno
 
-class PacienteForm(forms.ModelForm):
+class BootstrapModelForm(forms.ModelForm):
+
+    # Formulario base que inyecta automáticamente las clases de Bootstrap 5 a todos sus campos para garantizar una interfaz de usuario cuidada.
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            # Conservamos clases previas si las hubiera (por ejemplo si añadimos clases personalizadas)
+            existing_classes = field.widget.attrs.get('class', '')
+            
+            # Si es un checkbox o radio de Bootstrap se maneja diferente
+            if isinstance(field.widget, (forms.CheckboxInput, forms.RadioSelect)):
+                field.widget.attrs.update({'class': f'{existing_classes} form-check-input'.strip()})
+            else:
+                field.widget.attrs.update({'class': f'{existing_classes} form-control'.strip()})
+
+class PacienteForm(BootstrapModelForm):
     class Meta:
         model = Paciente
         fields = ['nombre', 'apellido', 'dni', 'email', 'telefono']
         # El campo 'usuario' lo asignaremos automáticamente en la vista
 
-    # Validación personalizada 1
-    def clean_dni(self):
+    def clean(self):
         """
         Delegamos la validación al modelo Paciente para evitar duplicación (DRY).
         """
@@ -38,7 +52,7 @@ class PacienteForm(forms.ModelForm):
 
         return cleaned_data
 
-class TurnoForm(forms.ModelForm):
+class TurnoForm(BootstrapModelForm):
     class Meta:
         model = Turno
         fields = ['medico', 'fecha_hora', 'motivo']
