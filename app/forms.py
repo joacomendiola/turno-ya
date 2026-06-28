@@ -11,12 +11,32 @@ class PacienteForm(forms.ModelForm):
 
     # Validación personalizada 1
     def clean_dni(self):
-        dni = self.cleaned_data.get('dni')
-        if dni:
-            largo_dni = len(str(dni))
-            if largo_dni < 7 or largo_dni > 8:
-                raise ValidationError("El DNI debe tener entre 7 y 8 dígitos.")
-        return dni
+        """
+        Delegamos la validación al modelo Paciente para evitar duplicación (DRY).
+        """
+        cleaned_data = super().clean()
+        nombre = cleaned_data.get('nombre')
+        apellido = cleaned_data.get('apellido')
+        dni = cleaned_data.get('dni')
+        email = cleaned_data.get('email')
+
+        # Ejecutamos la validación centralizada en el modelo
+        model_errors = Paciente.validate(nombre, apellido, dni, email)
+
+        if model_errors:
+            for error in model_errors:
+                if "nombre" in error.lower():
+                    self.add_error('nombre', error)
+                elif "apellido" in error.lower():
+                    self.add_error('apellido', error)
+                elif "email" in error.lower() or "correo" in error.lower():
+                    self.add_error('email', error)
+                elif "dni" in error.lower():
+                    self.add_error('dni', error)
+                else:
+                    self.add_error(None, error)  # Error global
+
+        return cleaned_data
 
 class TurnoForm(forms.ModelForm):
     class Meta:
