@@ -83,7 +83,7 @@ python manage.py createsuperuser
 ### 6. Correr el servidor de desarrollo
 
 ```bash
-python manage.py runserver
+python manage.py python manage.py runserverunserver
 ```
 
 Accedé a [http://localhost:8000](http://localhost:8000)  
