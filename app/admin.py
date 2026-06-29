@@ -3,6 +3,12 @@
 from django.contrib import admin
 from .models import Medico, Especialidad, Paciente, Turno, Recordatorio, Ausencia, ObraSocial
 
+class ObraSocialInline(admin.TabularInline):
+    model = ObraSocial.medicos_disponibles.through
+    extra = 1
+    verbose_name = "Obra Social"
+    verbose_name_plural = "Obras Sociales con las que trabaja"
+
 @admin.register(Especialidad)
 class EspecialidadAdmin(admin.ModelAdmin):
     """Configuración del panel de administración para Especialidades."""
@@ -21,6 +27,7 @@ class MedicoAdmin(admin.ModelAdmin):
     list_display = ("apellido", "nombre", "matricula", "especialidad")
     list_filter = ("especialidad",)
     search_fields = ("apellido", "nombre", "matricula")
+    inlines = [ObraSocialInline]
     fieldsets = (
         ("Datos personales", {
             "fields": ("nombre", "apellido", "matricula"),
