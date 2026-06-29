@@ -3,85 +3,139 @@
 {% block title %}Inicio — TurnoYa{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-  <div class="col">
-    <h1 class="h3">Panel de inicio</h1>
-    <p class="text-muted">Bienvenido al sistema de gestión de turnos médicos.</p>
-  </div>
-</div>
+<style>
+    .hero-section {
+        background: linear-gradient(rgba(14, 46, 80, 0.75), rgba(14, 46, 80, 0.75)), url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1920&q=80') no-repeat center center;
+        background-size: cover;
+        padding: 120px 0;
+        color: white;
+        margin-top: -1.5rem;
+        margin-bottom: 3rem;
+        border-radius: 8px;
+    }
+    .hero-title { font-weight: 700; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+    .hero-subtitle { font-weight: 300; font-size: 1.8rem; }
+    .hero-text { font-size: 1.1rem; max-width: 800px; margin: 0 auto; opacity: 0.9; }
+</style>
 
-<div class="row g-3">
-  <div class="col-md-3">
-    <div class="card p-3">
-      <h5>Total de médicos</h5>
-      <p class="display-6">{{ total_medicos }}</p>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card p-3">
-      <h5>Total de pacientes</h5>
-      <p class="display-6">{{ total_pacientes }}</p>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card p-3">
-      <h5>Total de turnos</h5>
-      <p class="display-6">{{ total_turnos }}</p>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card p-3">
-      <h5>Turnos confirmados</h5>
-      <p class="display-6">{{ turnos_confirmados }}</p>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card p-3">
-      <h5>Ausencias activas</h5>
-      <p class="display-6">{{ ausencias_activas }}</p>
-    </div>
-  </div>
-</div>
-
-{% if prox_turnos %}
-<div class="row mt-4">
-  <div class="col">
-    <h2>Próximos turnos</h2>
-    <ul class="list-group">
-      {% for turno in prox_turnos %}
-      <li class="list-group-item">
-        {{ turno.fecha_hora|date:"d/m/Y H:i" }}
-        - {{ turno.medico }} / {{ turno.paciente }}
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
-</div>
-{% endif %}
-{% if especialidades %}
-<div class="row mt-4">
-  <div class="col">
-    <h2>Médicos por especialidad</h2>
-    {% for especialidad in especialidades %}
-      <div class="card mb-3">
-        <div class="card-body">
-          <h5 class="card-title">{{ especialidad.nombre }}</h5>
-          {% if especialidad.medico.all %}
-            <ul class="list-group list-group-flush">
-              {% for medico in especialidad.medico.all %}
-                <li class="list-group-item">
-                  {{ medico.nombre }} {{ medico.apellido }}
-                  <span class="text-muted">({{ medico.matricula }})</span>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="text-muted mb-0">No hay médicos cargados en esta especialidad.</p>
-          {% endif %}
+<div class="hero-section text-center shadow-lg">
+    <div class="container">
+        <h1 class="display-3 hero-title mb-3">¡BIENVENIDOS!</h1>
+        <h2 class="hero-subtitle mb-4">Atención centrada en la PERSONA</h2>
+        <p class="hero-text mb-5">
+            Somos un equipo de profesionales médicos, técnicos y administrativos, 
+            comprometidos en brindar cada día una excelente atención, eficiencia y con un trato cálido y cordial.
+        </p>
+        <div>
+            {% if user.is_authenticated %}
+                {% if user.paciente %}
+                <a href="{% url 'app:nuevo_turno' %}" class="btn btn-primary btn-lg px-5 mx-2 rounded-pill shadow-sm">SOLICITAR TURNO</a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'app:login' %}" class="btn btn-primary btn-lg px-5 mx-2 rounded-pill shadow-sm">INICIAR SESIÓN</a>
+            {% endif %}
+            <a href="{% url 'app:lista_medicos' %}" class="btn btn-light btn-lg px-5 mx-2 rounded-pill shadow-sm">VER MÉDICOS</a>
         </div>
-      </div>
-    {% endfor %}
-  </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm border-bottom border-primary border-3">
+            <div class="card-body text-center">
+                <h6 class="text-muted text-uppercase mb-2">Total de Médicos</h6>
+                <h2 class="display-5 fw-bold text-dark">{{ total_medicos }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm border-bottom border-primary border-3">
+            <div class="card-body text-center">
+                <h6 class="text-muted text-uppercase mb-2">Total de Pacientes</h6>
+                <h2 class="display-5 fw-bold text-dark">{{ total_pacientes }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm border-bottom border-primary border-3">
+            <div class="card-body text-center">
+                <h6 class="text-muted text-uppercase mb-2">Total de Turnos</h6>
+                <h2 class="display-5 fw-bold text-dark">{{ total_turnos }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm border-bottom border-primary border-3">
+            <div class="card-body text-center">
+                <h6 class="text-muted text-uppercase mb-2">Ausencias Activas</h6>
+                <h2 class="display-5 fw-bold text-dark">{{ ausencias_activas }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.is_staff or user.medico %}
+<div class="row">
+    {% if prox_turnos %}
+    <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                <h4 class="fw-bold" style="color: #2c3e50;">Próximos turnos</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                {% for turno in prox_turnos %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 mb-2">
+                        <div>
+                            <span class="d-block fw-semibold">{{ turno.fecha_hora|date:"d/m/Y H:i" }}</span>
+                            <small class="text-muted">{{ turno.medico }} / {{ turno.paciente }}</small>
+                        </div>
+                        <span class="badge bg-light text-dark border"><i class="bi bi-calendar-event"></i></span>
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if especialidades %}
+    <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                <h4 class="fw-bold" style="color: #2c3e50;">Médicos por especialidad</h4>
+            </div>
+            <div class="card-body">
+                <div class="accordion accordion-flush" id="accordionEspecialidades">
+                {% for especialidad in especialidades %}
+                    <div class="accordion-item border-0">
+                        <h2 class="accordion-header" id="heading-{{ especialidad.id }}">
+                            <button class="accordion-button collapsed px-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ especialidad.id }}">
+                                {{ especialidad.nombre }}
+                            </button>
+                        </h2>
+                        <div id="collapse-{{ especialidad.id }}" class="accordion-collapse collapse" data-bs-parent="#accordionEspecialidades">
+                            <div class="accordion-body px-0 pt-0 pb-3">
+                                {% if especialidad.medico.all %}
+                                    <ul class="list-group list-group-flush">
+                                    {% for medico in especialidad.medico.all %}
+                                        <li class="list-group-item border-0 px-0 py-1 text-muted">
+                                            <i class="bi bi-person me-2"></i>{{ medico.nombre }} {{ medico.apellido }}
+                                        </li>
+                                    {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-muted small mb-0">No hay médicos cargados.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endif %}
-{% endblock %}
+{% endblock %}ñ
