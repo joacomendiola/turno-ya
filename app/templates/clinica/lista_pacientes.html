@@ -4,29 +4,31 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="h4">Directorio de Pacientes</h2>
+    <h2 class="h4 fw-bold" style="color: #2c3e50;">
+        <i class="bi bi-people-fill me-2" style="color: #4a90e2;"></i>Directorio de Pacientes
+    </h2>
 </div>
 
 <form method="get" class="mb-4">
-  <div class="input-group">
-    <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por apellido">
-    <button class="btn btn-primary" type="submit">Buscar</button>
+  <div class="input-group shadow-sm">
+    <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por apellido...">
+    <button class="btn text-white px-4" style="background-color: #4a90e2;" type="submit">Buscar</button>
   </div>
 </form>
 
-<div class="card shadow-sm border-success">
+<div class="card shadow-sm border-0 rounded-3">
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
 
-                <thead class="table-success text-dark">
+                <thead class="text-secondary border-bottom" style="background-color: #f8f9fa; font-size: 0.9rem;">
                     <tr>
-                        <th>Nombre y Apellido</th>
-
+                        <th class="ps-4">Nombre y Apellido</th>
                         {% if user.medico or user.is_staff %}
                         <th>DNI</th>
                         <th>Email</th>
                         <th>Teléfono</th>
+                        <th class="text-end pe-4">Acciones</th>
                         {% endif %}
                     </tr>
                 </thead>
@@ -34,18 +36,24 @@
                 <tbody>
                     {% for paciente in pacientes %}
                     <tr>
-                        <td class="fw-bold">{{ paciente.apellido }}, {{ paciente.nombre }}</td>
+                        <td class="fw-bold ps-4 text-dark">{{ paciente.apellido }}, {{ paciente.nombre }}</td>
 
                         {% if user.medico or user.is_staff %}
-                        <td>{{ paciente.dni }}</td>
-                        <td>{{ paciente.email }}</td>
-                        <td>{{ paciente.telefono|default_if_none:"-" }}</td>
+                        <td class="text-secondary">{{ paciente.dni }}</td>
+                        <td class="text-secondary">{{ paciente.email }}</td>
+                        <td class="text-secondary">{{ paciente.telefono|default_if_none:"-" }}</td>
+                        <td class="text-end pe-4">
+                            <a href="{% url 'app:historial_paciente' paciente.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm fw-semibold">
+                                <i class="bi bi-clipboard2-pulse-fill me-1"></i> Historial
+                            </a>
+                        </td>
                         {% endif %}
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="100%" class="text-center text-muted py-4">No hay pacientes registrados en el
-                            sistema.</td>
+                        <td colspan="100%" class="text-center text-muted py-4">
+                            <i class="bi bi-search d-block fs-4 mb-2"></i> No hay pacientes registrados en el sistema.
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
