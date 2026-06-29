@@ -137,12 +137,12 @@ class HomeViewTest(TestCase):
         self.assertIn("medicos_por_especialidad", response.context)
         self.assertIn("ausencias_activas", response.context)
 
-    def test_home_renders_cards_de_estadisticas(self):
+def test_home_renders_cards_de_estadisticas(self):
         response = self.client.get(reverse("app:home"))
-        self.assertContains(response, "Panel de inicio")
-        self.assertContains(response, "Total de médicos")
-        self.assertContains(response, "Total de pacientes")
-        self.assertContains(response, "Ausencias activas")
+        self.assertContains(response, "¡BIENVENIDOS!")
+        self.assertContains(response, "Total de Médicos")
+        self.assertContains(response, "Total de Pacientes")
+        self.assertContains(response, "Ausencias Activas")
 
 
 class AuthViewCBVTest(TestCase):
@@ -227,7 +227,7 @@ class TemplateCoverageTest(TestCase):
         response = self.client.get(reverse("app:nuevo_turno"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "clinica/nuevo_turno.html")
-        self.assertContains(response, "Solicitar un nuevo turno")
+        self.assertContains(response, "Agendar Turno Médico")
 
     def test_nueva_ausencia_template(self):
         self.client.login(username="medico", password="pass")
@@ -273,3 +273,25 @@ class TemplateCoverageTest(TestCase):
         response = self.client.get(reverse("app:cancelar_turno", kwargs={"pk": self.turno.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "clinica/cancelar_turno.html")
+    
+class HistorialPacienteViewTests(TestCase):
+    def setUp(self):
+        # Creamos la estructura base para la prueba
+        self.user_medico = User.objects.create_user(username='doc_antonio', password='password123')
+        self.especialidad = Especialidad.objects.create(nombre='Pediatria')
+        self.medico = Medico.objects.create(nombre='Antonio', apellido='Banderas', matricula='2026', especialidad=self.especialidad, usuario=self.user_medico)
+        
+        self.user_paciente = User.objects.create_user(username='paciente_gaston', password='password123')
+        self.paciente = Paciente.objects.create(nombre='Gastón', apellido='Mendiola', dni='12345678', email='gaston@email.com', usuario=self.user_paciente)
+
+    def test_medico_autenticado_puede_ver_historial(self):
+        self.client.login(username='doc_antonio', password='password123')
+        response = self.client.get(reverse('app:historial_paciente', kwargs={'paciente_id': self.paciente.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Historial Clínico")
+
+    def test_paciente_no_puede_ver_historial_y_da_error(self):
+        self.client.login(username='paciente_gaston', password='password123')
+        response = self.client.get(reverse('app:historial_paciente', kwargs={'paciente_id': self.paciente.id}))
+        # Valida que rebote con un código de error de permiso denegado (403)
+        self.assertEqual(response.status_code, 403)

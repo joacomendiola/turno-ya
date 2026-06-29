@@ -28,6 +28,10 @@ class MedicoAdmin(admin.ModelAdmin):
         ("Especialidad", {
             "fields": ("especialidad",),
         }),
+          ("Usuario asociado", {
+            "fields": ("usuario",),
+            "classes": ("collapse",),
+        }),
     )
 
 

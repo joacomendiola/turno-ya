@@ -217,17 +217,18 @@ class CancelarTurnoView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         turno = self.get_object()
+        user = self.request.user
         
-        # Validar que el usuario tenga perfil de paciente antes de acceder
-        if not hasattr(self.request.user, 'paciente'):
-            messages.error(self.request, "Debes tener un perfil de paciente para cancelar un turno.")
-            return redirect(self.success_url)
-        
-        if turno.paciente != self.request.user.paciente:
+        # Ahora paciente y medico puede cancelar el turno
+        es_paciente = hasattr(user, 'paciente') and turno.paciente == user.paciente
+        es_medico = hasattr(user, 'medico') and turno.medico == user.medico
+
+        if not (es_paciente or es_medico):
             messages.error(self.request, "No tienes permiso para cancelar este turno.")
             return redirect(self.success_url)
-
+        # Si pasa la validación, procedemos a cancelar
         errors = turno.update(estado='cancelado')
+    
         if not errors:
             messages.success(self.request, "El turno ha sido cancelado exitosamente.")
             return redirect(self.success_url)
@@ -254,6 +255,21 @@ class ListaTurnosView(LoginRequiredMixin, ListView):
         context['es_medico'] = hasattr(self.request.user, 'medico')
         context['es_paciente'] = hasattr(self.request.user, 'paciente')
         return context
+    
+    def post(self, request, *args, **kwargs):
+        turno_id = request.POST.get('turno_id')
+        observaciones = request.POST.get('observaciones')
+        
+        if turno_id and observaciones is not None:
+            turno = get_object_or_404(Turno, id=turno_id)
+            if hasattr(request.user, 'medico') and turno.medico == request.user.medico:
+                turno.observaciones = observaciones
+                turno.save()
+                messages.success(request, "Observaciones guardadas correctamente.")
+            else:
+                messages.error(request, "No tienes permiso para editar este turno.")
+                
+        return redirect('app:lista_turnos')
     
 class AceptarTurnoView(LoginRequiredMixin, UpdateView):
     model = Turno
@@ -390,3 +406,24 @@ class PropuestasPacienteView(LoginRequiredMixin, ListView):
         if hasattr(user, 'paciente'):
             return Turno.objects.filter(paciente=user.paciente, propuesta_pendiente=True)
         return Turno.objects.none()
+    
+class HistorialPacienteView(LoginRequiredMixin, ListView):
+    """Vista exclusiva para médicos: muestra el historial clínico de un paciente."""
+    model = Turno
+    template_name = 'clinica/historial_paciente.html'
+    context_object_name = 'turnos'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not hasattr(request.user, 'medico'):
+            raise PermissionDenied("Solo los médicos pueden acceder al historial.")
+        self.paciente = get_object_or_404(Paciente, id=self.kwargs['paciente_id'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        # Traemos todos los turnos del paciente (menos los cancelados) ordenados del más reciente al más antiguo
+        return Turno.objects.filter(paciente=self.paciente).exclude(estado='cancelado').order_by('-fecha_hora')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['paciente'] = self.paciente
+        return context

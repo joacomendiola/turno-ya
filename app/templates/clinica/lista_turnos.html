@@ -42,23 +42,20 @@
 
         {% if es_medico %}
         <td>
-          <form method="post" action="#" class="d-flex gap-2">
+          <form method="post" action="{% url 'app:lista_turnos' %}" class="d-flex gap-2">
             {% csrf_token %}
+            <input type="hidden" name="turno_id" value="{{ turno.id }}">
             <textarea name="observaciones" class="form-control form-control-sm" rows="1"
-              placeholder="Evolución clínica..."></textarea>
+              placeholder="Evolución clínica...">{{ turno.observaciones|default_if_none:"" }}</textarea>
             <button type="submit" class="btn btn-sm btn-success">Guardar</button>
           </form>
         </td>
         {% endif %}
 
         <td>
-          {% if turno.estado == 'pendiente' %}
-          <span class="badge bg-warning text-dark">Pendiente</span>
-          {% elif turno.estado == 'confirmado' %}
-          <span class="badge bg-success">Confirmado</span>
-          {% else %}
-          <span class="badge bg-danger">Cancelado</span>
-          {% endif %}
+          <span class="badge bg-{% if turno.estado == 'confirmado' %}success{% elif turno.estado == 'pendiente' %}warning text-dark{% else %}danger{% endif %}">
+            {{ turno.get_estado_display }}
+          </span>
         </td>
 
         <td>

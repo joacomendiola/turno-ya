@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de {{ paciente.nombre }} {{ paciente.apellido }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0" style="color: #2c3e50;">
+            <i class="bi bi-person-lines-fill me-2" style="color: #4a90e2;"></i>
+            Historial Clínico: {{ paciente.apellido }}, {{ paciente.nombre }}
+        </h2>
+        <a href="{% url 'app:lista_pacientes' %}" class="btn btn-outline-secondary rounded-pill">Volver a Pacientes</a>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body bg-light rounded-4">
+            <div class="row text-secondary">
+                <div class="col-md-4"><strong>DNI:</strong> {{ paciente.dni }}</div>
+                <div class="col-md-4"><strong>Email:</strong> {{ paciente.email }}</div>
+                <div class="col-md-4"><strong>Teléfono:</strong> {{ paciente.telefono|default:"-" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="timeline mt-5">
+        <h4 class="mb-4 text-secondary border-bottom pb-2">Registros de Turnos</h4>
+        
+        {% for turno in turnos %}
+        <div class="card shadow-sm mb-4 border-0 border-start border-4 {% if turno.observaciones %}border-primary{% else %}border-secondary{% endif %}">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-0 d-flex justify-content-between">
+                <h6 class="mb-0 text-dark fw-bold">{{ turno.fecha_hora|date:"d M Y - H:i" }}hs</h6>
+                <span class="badge {% if turno.estado == 'confirmado' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                    {{ turno.get_estado_display }}
+                </span>
+            </div>
+            <div class="card-body">
+                <p class="mb-1"><strong>Atendido por:</strong> Dr/a. {{ turno.medico.apellido }} ({{ turno.medico.especialidad }})</p>
+                <p class="mb-3 text-muted small"><strong>Motivo:</strong> {{ turno.motivo }}</p>
+                
+                {% if turno.observaciones %}
+                <div class="p-3 bg-light rounded">
+                    <strong class="text-primary d-block mb-1">Observación / Evolución:</strong>
+                    <span>{{ turno.observaciones }}</span>
+                </div>
+                {% else %}
+                <p class="text-muted fst-italic small mb-0">Sin observaciones cargadas.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="alert alert-info text-center py-4 rounded-4">
+            <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
+            Este paciente no registra turnos previos en la clínica.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
