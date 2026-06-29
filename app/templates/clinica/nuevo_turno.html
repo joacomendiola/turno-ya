@@ -2,47 +2,76 @@
 {% block title %}Nuevo Turno — TurnoYa{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_green.css">
+<style>
+    /* Estilos personalizados para mantener la coherencia con el Home */
+    .card-header-brand {
+        background-color: #4a90e2;
+        color: white;
+        border-bottom: none;
+    }
+    .btn-brand {
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .btn-brand:hover {
+        background-color: #357abd; /* Un azul apenas más oscuro para el hover */
+        color: white;
+        transform: translateY(-1px);
+    }
+    /* Efecto de foco en los inputs para que brillen en azul y no en el color por defecto */
+    .form-control:focus, .form-select:focus {
+        border-color: #4a90e2;
+        box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
+    }
+    .info-box {
+        background-color: rgba(74, 144, 226, 0.1);
+        border-left: 4px solid #4a90e2;
+        color: #2c3e50;
+    }
+</style>
 
-<div class="row justify-content-center mt-4">
-  <div class="col-md-7">
-    <div class="card shadow-lg border-0 rounded-3">
-        <div class="card-header bg-success text-white py-3">
-            <h4 class="mb-0 fw-bold d-flex align-items-center">
-              <i class="bi bi-calendar-plus me-2"></i> Agendar Turno Médico
+<div class="row justify-content-center my-5">
+  <div class="col-md-8 col-lg-7">
+    <div class="card shadow border-0 rounded-4">
+        <div class="card-header card-header-brand py-3 rounded-top-4">
+            <h4 class="mb-0 fw-semibold">
+                <i class="bi bi-calendar-plus me-2"></i>Agendar Turno Médico
             </h4>
         </div>
-        <div class="card-body p-4 bg-white">
-            <div class="alert alert-light border mb-4 small text-muted">
-                <i class="bi bi-info-circle-fill text-success me-1"></i> 
-                Recuerde que el sistema validará de forma automática que el profesional no tenga licencias cargadas en la fecha elegida.
+        
+        <div class="card-body p-4 p-md-5">
+            <div class="info-box p-3 mb-4 rounded-end d-flex align-items-center">
+                <i class="bi bi-info-circle-fill text-primary fs-5 me-3"></i>
+                <small class="mb-0">
+                    Recuerde que el sistema validará de forma automática que el profesional no tenga licencias cargadas en la fecha elegida.
+                </small>
             </div>
 
-            <form method="post" novalidate>
+            <form method="post">
               {% csrf_token %}
               
               {% for field in form %}
                   <div class="mb-4">
-                      <label class="form-label fw-bold text-secondary d-flex align-items-center">
-                        {{ field.label }}
-                      </label>
-                      
+                      <label class="form-label fw-bold text-secondary mb-1">{{ field.label }}</label>
                       {{ field }}
                       
+                      {% if field.help_text %}
+                          <div class="form-text small">{{ field.help_text }}</div>
+                      {% endif %}
+                      
                       {% if field.errors %}
-                          <div class="text-danger small mt-1">
-                            <i class="bi bi-exclamation-circle-fill me-1"></i>{{ field.errors|striptags }}
+                          <div class="text-danger small mt-2 fw-semibold">
+                              <i class="bi bi-exclamation-triangle me-1"></i>{{ field.errors|striptags }}
                           </div>
                       {% endif %}
                   </div>
               {% endfor %}
-
-              <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 border-top pt-3">
-                  <a href="{% url 'app:lista_turnos' %}" class="btn btn-light px-4">Cancelar</a>
-                  <button type="submit" class="btn btn-success px-4 fw-bold shadow-sm">
-                    Confirmar Solicitud
-                  </button>
+              
+              <div class="d-flex justify-content-end gap-3 mt-5 pt-3 border-top">
+                  <a href="{% url 'app:lista_turnos' %}" class="btn btn-light px-4 rounded-pill shadow-sm">Cancelar</a>
+                  <button type="submit" class="btn btn-brand px-4 fw-semibold rounded-pill shadow-sm">Confirmar Solicitud</button>
               </div>
             </form>
         </div>
@@ -50,18 +79,20 @@
   </div>
 </div>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/material_blue.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    flatpickr(".datetimepicker", {
-      enableTime: true,
-      dateFormat: "Y-m-d H:i",
-      minDate: "today",
-      locale: "es",
-      time_24hr: true,
-      minuteIncrement: 15,
+    document.addEventListener('DOMContentLoaded', function() {
+        flatpickr(".datetimepicker", {
+            enableTime: true,              
+            dateFormat: "Y-m-d H:i",       
+            locale: "es",                  
+            minDate: "today",              
+            time_24hr: true,               
+            minuteIncrement: 15            
+        });
     });
-  });
 </script>
 {% endblock %}
