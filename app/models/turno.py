@@ -15,6 +15,7 @@ class Turno(models.Model):
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE)
     fecha_hora = models.DateTimeField(default=timezone.now)
     motivo = models.TextField()
+    observaciones = models.TextField(null=True, blank=True)
     estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
     creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     propuesta_fecha = models.DateTimeField(null=True, blank=True)
