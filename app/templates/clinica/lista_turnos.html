@@ -42,10 +42,11 @@
 
         {% if es_medico %}
         <td>
-          <form method="post" action="#" class="d-flex gap-2">
+          <form method="post" action="{% url 'app:lista_turnos' %}" class="d-flex gap-2">
             {% csrf_token %}
+            <input type="hidden" name="turno_id" value="{{ turno.id }}">
             <textarea name="observaciones" class="form-control form-control-sm" rows="1"
-              placeholder="Evolución clínica..."></textarea>
+              placeholder="Evolución clínica...">{{ turno.observaciones|default_if_none:"" }}</textarea>
             <button type="submit" class="btn btn-sm btn-success">Guardar</button>
           </form>
         </td>

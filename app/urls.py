@@ -40,4 +40,7 @@ urlpatterns = [
     path("turnos/<int:pk>/detalle/", views.DetalleTurnoView.as_view(), name="detalle_turno"),
     path("turnos/<int:pk>/cancelar/", views.CancelarTurnoView.as_view(), name="cancelar_turno"),
     path("turnos/<int:pk>/aceptar/", views.AceptarTurnoView.as_view(), name="aceptar_turno"),
+
+    #Historial
+    path("pacientes/<int:paciente_id>/historial/", views.HistorialPacienteView.as_view(), name="historial_paciente"),
 ]
