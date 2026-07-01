@@ -1,5 +1,3 @@
-
-# 4. Turno
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -31,6 +29,9 @@ class Turno(models.Model):
         return f"Turno {self.id} - {self.paciente}"
 
     def clean(self):
+        if self.estado == 'cancelado':
+            return
+            
         errors = Turno.validate(self.medico, self.fecha_hora, self.pk)
         if errors:
             raise ValidationError({'fecha_hora': errors})
@@ -46,13 +47,23 @@ class Turno(models.Model):
         if query.exists():
             errors.append("El médico ya tiene un turno asignado en ese horario.")
             
-        # 2. Validación de Ausencia (Tarea 3.2)
         fecha_turno = fecha_hora.date()
-        ausencia_activa = medico.ausencia_set.filter(
-            fecha_inicio__lte=fecha_turno,
-            fecha_fin__gte=fecha_turno
-        ).exists()
+        ausencia_activa = False
         
+        for ausencia in medico.ausencia_set.all():
+            inicio = ausencia.fecha_inicio
+            fin = ausencia.fecha_fin
+            
+            if hasattr(inicio, 'date'): inicio = inicio.date()
+            if hasattr(fin, 'date'): fin = fin.date()
+            
+            try:
+                if inicio <= fecha_turno <= fin:
+                    ausencia_activa = True
+                    break
+            except TypeError:
+                continue
+                
         if ausencia_activa:
             errors.append("El médico se encuentra ausente o de licencia en la fecha solicitada.")
             
@@ -63,8 +74,6 @@ class Turno(models.Model):
         errors = cls.validate(medico, fecha_hora)
         if errors:
             return None, errors
-        
-        # Atrapamos fallos directos de unicidad de la BD para transformarlos en errores limpios
         from django.db import IntegrityError
         try:
             turno = cls.objects.create(
@@ -81,9 +90,13 @@ class Turno(models.Model):
     def update(self, **kwargs):
         medico = kwargs.get('medico', self.medico)
         fecha_hora = kwargs.get('fecha_hora', self.fecha_hora)
-        errors = self.validate(medico, fecha_hora, self.pk)
-        if errors:
-            return errors
+        estado = kwargs.get('estado', self.estado) 
+        
+        if estado != 'cancelado':
+            errors = self.validate(medico, fecha_hora, self.pk)
+            if errors:
+                return errors
+                
         for field, value in kwargs.items():
             setattr(self, field, value)
         self.save()
@@ -96,7 +109,7 @@ class Turno(models.Model):
         self.propuesta_mensaje = mensaje or ""
         self.propuesta_creado_por = creado_por
         self.save()
-        # Notificar creando un Recordatorio (opcional)
+        # Notificar creando un Recordatorio 
         from app.models.recordatorio import Recordatorio
         Recordatorio.objects.create(
             turno=self,

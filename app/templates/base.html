@@ -95,9 +95,14 @@
                         </li>
                         
                         {% if user.medico or user.is_staff %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'app:lista_pacientes' %}">Pacientes</a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'app:lista_pacientes' %}">Pacientes</a>
+                            </li>
+                            {% if user.medico %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'app:registrar_ausencia' %}">Registrar Ausencia</a>
+                                </li>
+                            {% endif %}
                         {% endif %}
                         
                         <li class="nav-item">

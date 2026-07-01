@@ -83,7 +83,7 @@ python manage.py createsuperuser
 ### 6. Correr el servidor de desarrollo
 
 ```bash
-python manage.py python manage.py runserverunserver
+python manage.py runserver
 ```
 
 Accedé a [http://localhost:8000](http://localhost:8000)  
@@ -108,39 +108,50 @@ python manage.py test app.tests.test_views -v 2
 
 ## 🔑 Credenciales de prueba
 
-> ⚠️ Solo para uso del corrector en entorno de desarrollo local.
+> ⚠️ Solo para uso en el entorno de desarrollo local. Todos los usuarios de prueba comparten la misma contraseña.
 
 | Rol | Usuario | Contraseña |
 |-----|---------|-----------|
-| Superusuario / Admin | `admin` | `admin1234` |
-| Usuario de prueba | `usuario_prueba` | `prueba1234` |
+| **Administrador (Staff)** | `usuarioadmin` | `admin12345` |
+| **Médico de prueba** | `medico` | `admin12345` |
+| **Paciente de prueba** | `paciente` | `admin12345` |
 
 ---
 
 ## 📁 Estructura del proyecto
 
 ```
-turnoya/
-├── turnoya/            # Configuración del proyecto Django
+turno-ya/
+├── turnoya/                # Configuración del proyecto Django (settings, urls, asgi, wsgi)
 │   ├── settings.py
 │   └── urls.py
-├── app/                # App principal
-│   ├── models.py       # Especialidad, Medico, Paciente, Turno
-│   ├── views.py
-│   ├── urls.py
-│   ├── forms.py
-│   ├── admin.py
-│   ├── consultas.py    # Consultas ORM
-│   └── tests/
-│       ├── test_models.py
-│       └── test_views.py
-├── templates/
-│   ├── base.html
-│   └── registration/
-├── static/
-├── manage.py
-├── requirements.txt
-└── .gitignore
+├── app/                    # Aplicación principal del sistema
+│   ├── models/             # Modelos de la base de datos (Estructura modular)
+│   │   ├── init.py
+│   │   ├── ausencia.py
+│   │   ├── especialidad.py
+│   │   ├── medico.py
+│   │   ├── obraSocial.py
+│   │   ├── paciente.py
+│   │   ├── recordatorio.py
+│   │   └── turno.py
+│   ├── templates/          # Plantillas HTML estructuradas
+│   │   ├── base.html
+│   │   ├── clinica/        # Vistas de turnos, historiales, perfiles y ausencias
+│   │   └── auth/           # Vistas de login y registro
+│   ├── migrations/         # Historial de migraciones de la base de datos
+│   ├── tests/              # Pruebas automatizadas (Models y Views)
+│   │   ├── test_models.py
+│   │   └── test_views.py
+│   ├── admin.py            # Configuración del panel de administración de Django
+│   ├── apps.py
+│   ├── forms.py            # Formularios de la aplicación
+│   ├── urls.py             # Enrutamiento interno de la app
+│   └── views.py            # Lógica de las vistas y controladores del negocio
+├── db.sqlite3              # Base de datos local (Desarrollo)
+├── manage.py               # Script de gestión de Django
+├── requirements.txt        # Dependencias del proyecto
+└── .gitignore              # Archivos excluidos del control de versiones
 ```
 
 ---
